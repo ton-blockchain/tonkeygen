@@ -1,0 +1,27 @@
+[submodule "Keygen/ThirdParty/variant"]
+	path = Keygen/ThirdParty/variant
+	url = https://github.com/mapbox/variant
+[submodule "Keygen/ThirdParty/GSL"]
+	path = Keygen/ThirdParty/GSL
+	url = https://github.com/Microsoft/GSL.git
+[submodule "Keygen/lib_crl"]
+	path = Keygen/lib_crl
+	url = https://github.com/desktop-app/lib_crl
+[submodule "Keygen/lib_rpl"]
+	path = Keygen/lib_rpl
+	url = https://github.com/desktop-app/lib_rpl
+[submodule "Keygen/lib_base"]
+	path = Keygen/lib_base
+	url = https://github.com/desktop-app/lib_base
+[submodule "Keygen/lib_ui"]
+	path = Keygen/lib_ui
+	url = https://github.com/desktop-app/lib_ui
+[submodule "Keygen/codegen"]
+	path = Keygen/codegen
+	url = https://github.com/desktop-app/codegen
+[submodule "Keygen/gyp/helpers"]
+	path = Keygen/gyp/helpers
+	url = https://github.com/desktop-app/gyp_helpers
+[submodule "Keygen/lib_ton"]
+	path = Keygen/lib_ton
+	url = https://github.com/desktop-app/lib_ton.git

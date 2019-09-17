@@ -1,0 +1,11 @@
+<(src_loc)/core/launcher.cpp
+<(src_loc)/core/launcher.h
+<(src_loc)/core/main.cpp
+<(src_loc)/core/qt_static_plugins.cpp
+<(src_loc)/core/sandbox.cpp
+<(src_loc)/core/sandbox.h
+<(src_loc)/core/ui_integration.cpp
+<(src_loc)/core/ui_integration.h
+
+platforms: win
+<(res_loc)/win/Keygen.rc
