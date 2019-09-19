@@ -17,4 +17,7 @@ nextButton: RoundButton(defaultActiveButton) {
 	textTop: 17px;
 	font: font(17px semibold);
 }
-
+checkInputField: InputField(defaultInputField) {
+	textMargins: margins(0px, 6px, 0px, 4px);
+	heightMin: 32px;
+}

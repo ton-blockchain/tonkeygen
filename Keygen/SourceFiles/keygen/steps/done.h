@@ -10,4 +10,13 @@
 
 namespace Keygen::Steps {
 
+class Done final : public Step {
+public:
+	explicit Done(const QString &publicKey);
+
+private:
+	void initControls(const QString &publicKey);
+
+};
+
 } // namespace Keygen::Steps

@@ -50,6 +50,11 @@ void Application::initSteps() {
 		checkRandomSeed();
 	}, _lifetime);
 
+	_steps->checkRequests(
+	) | rpl::start_with_next([=](std::vector<QString> &&words) {
+		checkWords(std::move(words));
+	}, _lifetime);
+
 	_steps->showIntro();
 }
 
@@ -142,6 +147,31 @@ void Application::checkRandomSeed() {
 		}) | ranges::to_vector;
 		_steps->showCreated(std::move(list));
 	}, errorHandler());
+}
+
+void Application::checkWords(std::vector<QString> &&words) {
+	Expects(_key.has_value());
+
+	if (_state == State::Checking) {
+		return;
+	}
+	_state = State::Checking;
+
+	auto key = Ton::Key();
+	key.publicKey = _key->publicKey;
+	key.words = ranges::view::all(
+		words
+	) | ranges::view::transform([](const QString &word) {
+		return word.toUtf8();
+	}) | ranges::to_vector;
+
+	Ton::CheckKey(key, [=] {
+		_state = State::Created;
+		_steps->showDone(_key->publicKey);
+	}, [=](Ton::Error error) {
+		_state = State::Created;
+		errorHandler()(error);
+	});
 }
 
 } // namespace Core

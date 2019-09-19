@@ -10,4 +10,20 @@
 
 namespace Keygen::Steps {
 
+class Check final : public Step {
+public:
+	explicit Check(const std::vector<QString> &values);
+
+	int desiredHeight() override;
+
+	[[nodiscard]] std::vector<QString> words() const;
+
+private:
+	void initControls(const std::vector<QString> &values);
+
+	int _desiredHeight = 0;
+	Fn<std::vector<QString>()> _words;
+
+};
+
 } // namespace Keygen::Steps

@@ -10,4 +10,17 @@
 
 namespace Keygen::Steps {
 
+class View final : public Step {
+public:
+	explicit View(std::vector<QString> &&words);
+
+	int desiredHeight() override;
+
+private:
+	void initControls(std::vector<QString> &&words);
+
+	int _desiredHeight = 0;
+
+};
+
 } // namespace Keygen::Steps

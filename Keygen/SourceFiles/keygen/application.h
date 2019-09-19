@@ -35,6 +35,7 @@ private:
 		WaitingRandom,
 		Creating,
 		Created,
+		Checking,
 	};
 	void initWindow();
 	void initSteps();
@@ -43,6 +44,7 @@ private:
 	void handleWindowEvent(not_null<QEvent*> e);
 	void handleWindowKeyPress(not_null<QKeyEvent*> e);
 	void checkRandomSeed();
+	void checkWords(std::vector<QString> &&words);
 
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 

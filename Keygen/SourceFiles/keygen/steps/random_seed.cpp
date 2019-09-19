@@ -37,8 +37,6 @@ QString RandomSeed::accumulated() const {
 void RandomSeed::initControls() {
 	using namespace rpl::mappers;
 
-	requestNextButton(NextButtonState());
-
 	rpl::combine(
 		_limit.value() | rpl::filter(_1 > 0),
 		inner()->heightValue(),

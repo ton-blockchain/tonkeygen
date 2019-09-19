@@ -31,6 +31,7 @@ public:
 	[[nodiscard]] not_null<Ui::RpWidget*> content() const;
 
 	[[nodiscard]] rpl::producer<QByteArray> generateRequests() const;
+	[[nodiscard]] rpl::producer<std::vector<QString>> checkRequests() const;
 
 	void next();
 	void back();
@@ -50,14 +51,17 @@ private:
 
 	const std::unique_ptr<Ui::RpWidget> _content;
 	const object_ptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
+	NextButtonState _lastNextState;
+
+	std::vector<QString> _words;
 
 	std::unique_ptr<Step> _step;
-	NextButtonState _nextState;
 
 	FnMut<void()> _next;
 	FnMut<void()> _back;
 
 	rpl::event_stream<QByteArray> _generateRequests;
+	rpl::event_stream<std::vector<QString>> _checkRequests;
 
 };
 

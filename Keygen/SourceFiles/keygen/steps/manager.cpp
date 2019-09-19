@@ -90,7 +90,7 @@ void Manager::showRandomSeed() {
 
 void Manager::showCreated(std::vector<QString> &&words) {
 	auto next = [=, list = std::move(words)]() mutable {
-		showWords(std::move(words));
+		showWords(std::move(list));
 	};
 	showStep(std::make_unique<Created>(), std::move(next), [=] {
 		showRandomSeed();
@@ -98,12 +98,29 @@ void Manager::showCreated(std::vector<QString> &&words) {
 }
 
 void Manager::showWords(std::vector<QString> &&words) {
+	_words = words;
+	showStep(std::make_unique<View>(std::move(words)), [=] {
+		showCheck();
+	});
 }
 
 void Manager::showCheck() {
+	//auto check = std::make_unique<Check>(); // #TODO
+	auto words = _words;
+	words.pop_back();
+	auto check = std::make_unique<Check>(words);
+
+	const auto raw = check.get();
+	auto back = _words.empty()
+		? Fn<void()>()
+		: [=] { showWords(base::duplicate(_words)); };
+	showStep(std::move(check), [=] {
+		_checkRequests.fire(raw->words());
+	}, back);
 }
 
 void Manager::showDone(const QString &publicKey) {
+	showStep(std::make_unique<Done>(publicKey));
 }
 
 void Manager::showStep(
@@ -134,12 +151,19 @@ void Manager::showStep(
 	}));
 	_nextButton->raise();
 
-	_step->nextButtonState(
-	) | rpl::start_with_next([=](NextButtonState state) {
+	rpl::combine(
+		_step->nextButtonState(),
+		_content->widthValue()
+	) | rpl::start_with_next([=](NextButtonState state, int width) {
 		_nextButton->move(
-			(_content->width() - _nextButton->width()) / 2,
+			(width - _nextButton->width()) / 2,
 			state.top);
-		_nextState = state;
+		_lastNextState = state;
+	}, inner->lifetime());
+
+	_step->nextClicks(
+	) | rpl::start_with_next([=] {
+		this->next();
 	}, inner->lifetime());
 
 	_step->setFocus();
@@ -147,6 +171,10 @@ void Manager::showStep(
 
 rpl::producer<QByteArray> Manager::generateRequests() const {
 	return _generateRequests.events();
+}
+
+rpl::producer<std::vector<QString>> Manager::checkRequests() const {
+	return _checkRequests.events();
 }
 
 } // namespace Keygen::Steps

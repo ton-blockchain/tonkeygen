@@ -14,6 +14,9 @@ namespace Ui {
 class RpWidget;
 class FlatLabel;
 class ScrollArea;
+class RoundButton;
+template <typename Widget>
+class FadeWrap;
 } // namespace Ui
 
 namespace Keygen::Steps {
@@ -35,9 +38,10 @@ public:
 	Step &operator=(const Step &other) = delete;
 	virtual ~Step() = 0;
 
+	[[nodiscard]] virtual int desiredHeight();
 	[[nodiscard]] not_null<Ui::RpWidget*> widget() const;
-
 	[[nodiscard]] rpl::producer<NextButtonState> nextButtonState() const;
+	[[nodiscard]] rpl::producer<> nextClicks() const;
 
 	virtual void setFocus();
 
@@ -57,6 +61,8 @@ private:
 	object_ptr<Ui::FlatLabel> _title = { nullptr };
 	object_ptr<Ui::FlatLabel> _description = { nullptr };
 
+	const std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
+	NextButtonState _lastNextState;
 	rpl::variable<NextButtonState> _nextButtonState;
 
 };
