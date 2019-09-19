@@ -7,9 +7,9 @@
 {
   'conditions': [[ 'build_win', {
     'libraries': [
+      '-lzlibstat',
       '-lUxTheme',
       '-lDbgHelp',
-      '-lNormaliz',
     ],
     'msvs_settings': {
       'VCManifestTool': {
@@ -20,6 +20,7 @@
       'Debug': {
         'library_dirs': [
           '<(libs_loc)/ton/build-debug',
+          '<(libs_loc)/zlib/contrib/vstudio/vc14/x86/ZlibStatDebug',
         ],
         'msvs_settings': {
           'VCLinkerTool': {
@@ -45,6 +46,7 @@
       'Release': {
         'library_dirs': [
           '<(libs_loc)/ton/build',
+          '<(libs_loc)/zlib/contrib/vstudio/vc14/x86/ZlibStatReleaseWithoutAsm',
         ],
         'msvs_settings': {
           'VCLinkerTool': {

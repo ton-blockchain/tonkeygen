@@ -18,6 +18,10 @@ class Manager;
 } // namespace Animations
 } // namespace Ui
 
+namespace Keygen {
+class Application;
+} // namespace Keygen
+
 namespace Core {
 
 class Launcher;
@@ -110,6 +114,8 @@ private:
 
 	const std::unique_ptr<Ui::Animations::Manager> _animationsManager;
 	int _scale = 0;
+
+	std::unique_ptr<Keygen::Application> _application;
 
 	struct LeaveSubscription {
 		LeaveSubscription(

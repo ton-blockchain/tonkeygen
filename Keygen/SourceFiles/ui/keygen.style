@@ -7,4 +7,14 @@
 using "ui/basic.style";
 using "ui/widgets/widgets.style";
 
+windowSize: size(640px, 480px);
+windowSizeMin: size(480px, 480px);
+
+nextButton: RoundButton(defaultActiveButton) {
+	width: 300px;
+	height: 56px;
+
+	textTop: 17px;
+	font: font(17px semibold);
+}
 

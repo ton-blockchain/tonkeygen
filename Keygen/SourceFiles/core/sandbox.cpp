@@ -7,6 +7,7 @@
 #include "core/sandbox.h"
 
 #include "core/launcher.h"
+#include "keygen/application.h"
 #include "ui/widgets/tooltip.h"
 #include "ui/emoji_config.h"
 #include "ui/effects/animations.h"
@@ -56,7 +57,11 @@ void Sandbox::run() {
 }
 
 void Sandbox::launchApplication() {
-	quit();
+	_application = std::make_unique<Keygen::Application>();
+	connect(this, &Sandbox::aboutToQuit, [=]() mutable {
+		_application = nullptr;
+	});
+	_application->run();
 }
 
 void Sandbox::checkLocalTime() {

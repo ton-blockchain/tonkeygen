@@ -6,6 +6,27 @@
 <(src_loc)/core/sandbox.h
 <(src_loc)/core/ui_integration.cpp
 <(src_loc)/core/ui_integration.h
+<(src_loc)/keygen/application.cpp
+<(src_loc)/keygen/application.h
+<(src_loc)/keygen/phrases.cpp
+<(src_loc)/keygen/phrases.h
+<(src_loc)/keygen/steps/check.cpp
+<(src_loc)/keygen/steps/check.h
+<(src_loc)/keygen/steps/created.cpp
+<(src_loc)/keygen/steps/created.h
+<(src_loc)/keygen/steps/done.cpp
+<(src_loc)/keygen/steps/done.h
+<(src_loc)/keygen/steps/intro.cpp
+<(src_loc)/keygen/steps/intro.h
+<(src_loc)/keygen/steps/manager.cpp
+<(src_loc)/keygen/steps/manager.h
+<(src_loc)/keygen/steps/random_seed.cpp
+<(src_loc)/keygen/steps/random_seed.h
+<(src_loc)/keygen/steps/step.cpp
+<(src_loc)/keygen/steps/step.h
+<(src_loc)/keygen/steps/view.cpp
+<(src_loc)/keygen/steps/view.h
+<(src_loc)/keygen/tr.h
 
 platforms: win
 <(res_loc)/win/Keygen.rc
