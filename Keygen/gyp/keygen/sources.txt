@@ -29,6 +29,8 @@
 <(src_loc)/keygen/tr.h
 <(src_loc)/ui/message_box.cpp
 <(src_loc)/ui/message_box.h
+<(src_loc)/ui/public_key_label.cpp
+<(src_loc)/ui/public_key_label.h
 
 platforms: win
 <(res_loc)/win/Keygen.rc

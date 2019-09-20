@@ -14,7 +14,7 @@ class Check final : public Step {
 public:
 	explicit Check(const std::vector<QString> &values);
 
-	int desiredHeight() override;
+	int desiredHeight() const override;
 
 	[[nodiscard]] std::vector<QString> words() const;
 

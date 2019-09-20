@@ -20,7 +20,7 @@ Step::Step(Type type)
 : _type(type)
 , _widget(std::make_unique<Ui::RpWidget>())
 , _scroll((type == Type::Scroll)
-	? Ui::CreateChild<Ui::ScrollArea>(_widget.get())
+	? Ui::CreateChild<Ui::ScrollArea>(_widget.get(), st::scrollArea)
 	: nullptr)
 , _inner(_scroll
 	? _scroll->setOwnedWidget(object_ptr<Ui::RpWidget>(_scroll)).data()
@@ -84,35 +84,56 @@ not_null<Ui::RpWidget*> Step::widget() const {
 	return _widget.get();
 }
 
-int Step::desiredHeight() {
-	return 0;
+int Step::desiredHeight() const {
+	return st::stepHeight;
 }
 
 not_null<Ui::RpWidget*> Step::inner() const {
 	return _inner;
 }
 
-void Step::setTitle(rpl::producer<TextWithEntities> text) {
-	_title.emplace(inner(), std::move(text));
+int Step::contentTop() const {
+	const auto desired = desiredHeight();
+	return (std::max(desired, inner()->height()) - desired) / 2;
+}
 
+void Step::setTitle(rpl::producer<TextWithEntities> text, int top) {
+	_title.emplace(
+		inner(),
+		std::move(text),
+		(_type == Type::Intro) ? st::introTitle : st::stepTitle);
+
+	if (!top) {
+		top = (_type == Type::Intro)
+			? st::introTitleTop
+			: (_type == Type::Scroll)
+			? st::scrollTitleTop
+			: st::stepTitleTop;
+	}
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		_title->resizeToNaturalWidth(size.width());
-		_title->move(
-			(size.width() - _title->width()) / 2,
-			(_type == Type::Scroll) ? 100 : (size.height() / 4));
+		_title->resizeToWidth(size.width());
+		_title->move(0, contentTop() + top);
 	}, _title->lifetime());
 }
 
-void Step::setDescription(rpl::producer<TextWithEntities> text) {
-	_description.emplace(inner(), std::move(text));
+void Step::setDescription(rpl::producer<TextWithEntities> text, int top) {
+	_description.emplace(
+		inner(),
+		std::move(text),
+		(_type == Type::Intro) ? st::introDescription : st::stepDescription);
 
+	if (!top) {
+		top = (_type == Type::Intro)
+			? st::introDescriptionTop
+			: (_type == Type::Scroll)
+			? st::scrollDescriptionTop
+			: st::stepDescriptionTop;
+	}
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		_description->resizeToNaturalWidth(size.width());
-		_description->move(
-			(size.width() - _description->width()) / 2,
-			(_type == Type::Scroll) ? 200 : (size.height() / 2));
+		_description->resizeToWidth(size.width());
+		_description->move(0, contentTop() + top);
 	}, _description->lifetime());
 }
 
@@ -131,6 +152,10 @@ rpl::lifetime &Step::lifetime() {
 }
 
 void Step::requestNextButton(NextButtonState state) {
+	if (!state.top) {
+		state.top = st::stepHeight - st::nextButtonAreaHeight;
+	}
+	state.top += contentTop();
 	_nextButtonState = state;
 }
 

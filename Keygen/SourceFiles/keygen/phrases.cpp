@@ -41,7 +41,7 @@ phrase lng_check_good_text = { "The words are correct. Please make\nsure you don
 phrase lng_check_good_next = { "Continue" };
 
 phrase lng_done_title = { "Your public key" };
-phrase lng_done_description = { "Below is your public key.\nPlease save it and share it with TON\ndevelopers to gain access to your TON account." };
+phrase lng_done_description = { "Below is your public key. Please save it and share it with TON\ndevelopers to gain access to your TON account." };
 phrase lng_done_copy_key = { "Copy public key" };
 phrase lng_done_save_key = { "Save as file" };
 phrase lng_done_verify_key = { "Verify private key" };

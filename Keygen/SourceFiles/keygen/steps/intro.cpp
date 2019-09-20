@@ -9,6 +9,7 @@
 #include "keygen/phrases.h"
 #include "ui/rp_widget.h"
 #include "ui/text/text_utilities.h"
+#include "styles/style_keygen.h"
 
 namespace Keygen::Steps {
 
@@ -23,7 +24,6 @@ void Intro::initControls() {
 	) | rpl::start_with_next([=](QSize size) {
 		auto state = NextButtonState();
 		state.text = tr::lng_intro_next(tr::now);
-		state.top = (size.height() * 3 / 4);
 		requestNextButton(state);
 	}, inner()->lifetime());
 }

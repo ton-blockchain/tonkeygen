@@ -29,12 +29,12 @@ private:
 };
 
 Word::Word(not_null<QWidget*> parent, int index, const QString &word)
-: _index(parent, QString::number(index + 1))
-, _word(parent, word) {
+: _index(parent, QString::number(index + 1) + '.', st::wordIndexLabel)
+, _word(parent, word, st::wordLabel) {
 }
 
 void Word::move(int left, int top) const {
-	_index->move(left - _index->width() - 10, top);
+	_index->move(left - _index->width() - st::wordIndexSkip, top);
 	_word->move(left, top);
 }
 
@@ -50,7 +50,7 @@ View::View(std::vector<QString> &&words) : Step(Type::Scroll) {
 	initControls(std::move(words));
 }
 
-int View::desiredHeight() {
+int View::desiredHeight() const {
 	return _desiredHeight;
 }
 
@@ -64,31 +64,29 @@ void View::initControls(std::vector<QString> &&words) {
 			Word(inner(), i, words[i]),
 			Word(inner(), i + rows, words[i + rows]));
 	}
-
-	inner()->widthValue(
-	) | rpl::start_with_next([=](int width) {
-		const auto half = width / 2;
-		const auto left = half - style::ConvertScale(100);
-		const auto right = half + style::ConvertScale(20);
-		auto top = style::ConvertScale(200);
-		for (const auto &pair : *labels) {
-			pair.first.move(left, top);
-			pair.second.move(right, top);
-			top += style::ConvertScale(30);
-		}
-	}, inner()->lifetime());
+	const auto rowsBottom = st::wordsTop + rows * st::wordHeight;
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
+		const auto half = size.width() / 2;
+		const auto left = half - st::wordSkipLeft;
+		const auto right = half + st::wordSkipRight;
+		auto top = contentTop() + st::wordsTop;
+		for (const auto &pair : *labels) {
+			pair.first.move(left, top);
+			pair.second.move(right, top);
+			top += st::wordHeight;
+		}
+
+		auto state = NextButtonState();
+		state.text = tr::lng_view_next(tr::now);
+		state.top = rowsBottom + st::wordsNextSkip;
+		requestNextButton(state);
 	}, inner()->lifetime());
 
-	const auto bottom = labels->back().first.top();
-	auto state = NextButtonState();
-	state.text = tr::lng_view_next(tr::now);
-	state.top = bottom + style::ConvertScale(30);
-	requestNextButton(state);
-
-	_desiredHeight = state.top + st::nextButton.height + style::ConvertScale(30);
+	_desiredHeight = rowsBottom
+		+ st::wordsNextSkip
+		+ st::wordsNextBottomSkip;
 }
 
 } // namespace Keygen::Steps

@@ -7,13 +7,14 @@
 #include "keygen/steps/done.h"
 
 #include "keygen/phrases.h"
-#include "ui/rp_widget.h"
 #include "ui/widgets/buttons.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/dropdown_menu.h"
 #include "ui/text/text_utilities.h"
+#include "ui/public_key_label.h"
 #include "styles/style_widgets.h"
 #include "styles/style_keygen.h"
+#include "styles/palette.h"
 
 #include <QtGui/QtEvents>
 
@@ -21,8 +22,8 @@ namespace Keygen::Steps {
 
 Done::Done(const QString &publicKey)
 : Step(Type::Default) {
-	setTitle(tr::lng_done_title(Ui::Text::RichLangValue));
-	setDescription(tr::lng_done_description(Ui::Text::RichLangValue));
+	setTitle(tr::lng_done_title(Ui::Text::RichLangValue), st::doneTitleTop);
+	setDescription(tr::lng_done_description(Ui::Text::RichLangValue), st::doneDescriptionTop);
 	initControls(publicKey);
 	initShortcuts();
 }
@@ -90,9 +91,7 @@ void Done::showMenu(not_null<Ui::IconButton*> toggle) {
 }
 
 void Done::initControls(const QString &publicKey) {
-	const auto key = Ui::CreateChild<Ui::FlatLabel>(
-		inner().get(),
-		rpl::single(publicKey));
+	const auto key = Ui::CreatePublicKeyLabel(inner().get(), publicKey);
 	const auto copy = Ui::CreateChild<Ui::RoundButton>(
 		inner().get(),
 		tr::lng_done_copy_key(),
@@ -119,19 +118,19 @@ void Done::initControls(const QString &publicKey) {
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		key->move(
-			(size.width() - key->width()) / 2,
-			(size.height() * 5 / 8));
-		copy->move(
-			(size.width() - copy->width()) / 2,
-			(size.height() * 3 / 4) - copy->height());
-		save->move(
-			(size.width() - save->width()) / 2,
-			(size.height() * 3 / 4) + save->height());
 		menuToggle->moveToRight(
 			st::doneMenuTogglePosition.x(),
 			st::doneMenuTogglePosition.y(),
 			size.width());
+		key->move(
+			(size.width() - key->width()) / 2,
+			contentTop() + st::doneKeyTop);
+		copy->move(
+			(size.width() - copy->width()) / 2,
+			contentTop() + st::doneCopyTop);
+		save->move(
+			(size.width() - save->width()) / 2,
+			contentTop() + st::doneSaveTop);
 	}, inner()->lifetime());
 }
 

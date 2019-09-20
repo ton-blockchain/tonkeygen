@@ -14,7 +14,7 @@ class View final : public Step {
 public:
 	explicit View(std::vector<QString> &&words);
 
-	int desiredHeight() override;
+	int desiredHeight() const override;
 
 private:
 	void initControls(std::vector<QString> &&words);

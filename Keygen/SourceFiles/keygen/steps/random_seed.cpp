@@ -8,7 +8,9 @@
 
 #include "keygen/phrases.h"
 #include "ui/rp_widget.h"
+#include "ui/widgets/labels.h"
 #include "ui/text/text_utilities.h"
+#include "styles/style_keygen.h"
 
 #include <QtGui/QtEvents>
 
@@ -37,14 +39,58 @@ QString RandomSeed::accumulated() const {
 void RandomSeed::initControls() {
 	using namespace rpl::mappers;
 
+	auto countText = _length.value() | rpl::map([](int value) {
+		return QString::number(value);
+	});
+	const auto counter = Ui::CreateChild<Ui::FlatLabel>(
+		inner().get(),
+		std::move(countText),
+		st::randomCounter);
+	const auto counterLabel = Ui::CreateChild<Ui::FlatLabel>(
+		inner().get(),
+		tr::lng_random_seed_amount(),
+		st::randomCounterLabel);
+	auto readyTotalText = rpl::combine(
+		tr::lng_random_seed_ready_total(),
+		_length.value(),
+		_limit.value()
+	) | rpl::map([](QString phrase, int ready, int total) {
+		return phrase.replace(
+			"{ready}",
+			QString::number(ready)
+		).replace(
+			"{total}",
+			QString::number(total)
+		);
+	});
+	const auto readyTotalLabel = Ui::CreateChild<Ui::FlatLabel>(
+		inner().get(),
+		std::move(readyTotalText),
+		st::randomCounterLabel);
+	readyTotalLabel->hide();
+
+	inner()->sizeValue(
+	) | rpl::start_with_next([=](QSize size) {
+		counter->resizeToWidth(size.width());
+		counter->move(0, contentTop() + st::randomCounterTop);
+		counterLabel->resizeToWidth(size.width());
+		counterLabel->move(0, contentTop() + st::randomCounterLabelTop);
+		readyTotalLabel->resizeToWidth(size.width());
+		readyTotalLabel->move(
+			0,
+			contentTop() + st::randomReadyTotalLabelTop);
+	}, counter->lifetime());
+
 	rpl::combine(
 		_limit.value() | rpl::filter(_1 > 0),
 		inner()->heightValue(),
 		_2
 	) | rpl::start_with_next([=](int height) {
+		counter->hide();
+		counterLabel->hide();
+		readyTotalLabel->show();
 		auto state = NextButtonState();
 		state.text = tr::lng_random_seed_next(tr::now);
-		state.top = (height * 3 / 4);
 		requestNextButton(state);
 	}, inner()->lifetime());
 

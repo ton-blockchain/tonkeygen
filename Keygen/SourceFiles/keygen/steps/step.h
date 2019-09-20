@@ -38,7 +38,7 @@ public:
 	Step &operator=(const Step &other) = delete;
 	virtual ~Step() = 0;
 
-	[[nodiscard]] virtual int desiredHeight();
+	[[nodiscard]] virtual int desiredHeight() const;
 	[[nodiscard]] not_null<Ui::RpWidget*> widget() const;
 	[[nodiscard]] rpl::producer<NextButtonState> nextButtonState() const;
 	[[nodiscard]] rpl::producer<> nextClicks() const;
@@ -49,9 +49,10 @@ public:
 
 protected:
 	[[nodiscard]] not_null<Ui::RpWidget*> inner() const;
+	[[nodiscard]] int contentTop() const;
 
-	void setTitle(rpl::producer<TextWithEntities> text);
-	void setDescription(rpl::producer<TextWithEntities> text);
+	void setTitle(rpl::producer<TextWithEntities> text, int top = 0);
+	void setDescription(rpl::producer<TextWithEntities> text, int top = 0);
 	void requestNextButton(NextButtonState state);
 
 private:

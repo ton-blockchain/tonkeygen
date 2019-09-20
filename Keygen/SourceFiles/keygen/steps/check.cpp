@@ -12,7 +12,6 @@
 #include "ui/widgets/input_fields.h"
 #include "ui/text/text_utilities.h"
 #include "styles/style_keygen.h"
-#include "styles/style_widgets.h"
 
 namespace Keygen::Steps {
 namespace {
@@ -33,14 +32,13 @@ private:
 };
 
 Word::Word(not_null<QWidget*> parent, int index, const QString &value)
-: _index(parent, QString::number(index + 1))
+: _index(parent, QString::number(index + 1) + '.', st::wordIndexLabel)
 , _word(parent, st::checkInputField, rpl::single(QString()), value) {
 }
 
 void Word::move(int left, int top) const {
-	_index->move(left - _index->width() - 10, top);
-	_word->move(left, top);
-	_word->resize(style::ConvertScale(80), _word->height());
+	_index->move(left - _index->width() - st::wordIndexSkip, top);
+	_word->move(left, top - st::checkInputSkip);
 }
 
 void Word::setFocus() {
@@ -67,7 +65,7 @@ std::vector<QString> Check::words() const {
 	return _words();
 }
 
-int Check::desiredHeight() {
+int Check::desiredHeight() const {
 	return _desiredHeight;
 }
 
@@ -82,18 +80,24 @@ void Check::initControls(const std::vector<QString> &values) {
 			Word(inner(), i, value(i)),
 			Word(inner(), i + rows, value(i + rows)));
 	}
+	const auto rowsBottom = st::wordsTop + rows * st::wordHeight;
 
-	inner()->widthValue(
-	) | rpl::start_with_next([=](int width) {
-		const auto half = width / 2;
-		const auto left = half - style::ConvertScale(100);
-		const auto right = half + style::ConvertScale(20);
-		auto top = style::ConvertScale(200);
+	inner()->sizeValue(
+	) | rpl::start_with_next([=](QSize size) {
+		const auto half = size.width() / 2;
+		const auto left = half - st::wordSkipLeft;
+		const auto right = half + st::wordSkipRight;
+		auto top = contentTop() + st::wordsTop;
 		for (const auto &pair : *labels) {
 			pair.first.move(left, top);
 			pair.second.move(right, top);
-			top += style::ConvertScale(34);
+			top += st::wordHeight;
 		}
+
+		auto state = NextButtonState();
+		state.text = tr::lng_view_next(tr::now);
+		state.top = rowsBottom + st::wordsNextSkip;
+		requestNextButton(state);
 	}, inner()->lifetime());
 
 	_words = [=] {
@@ -107,17 +111,9 @@ void Check::initControls(const std::vector<QString> &values) {
 		return result;
 	};
 
-	inner()->sizeValue(
-	) | rpl::start_with_next([=](QSize size) {
-	}, inner()->lifetime());
-
-	const auto bottom = labels->back().first.top();
-	auto state = NextButtonState();
-	state.text = tr::lng_view_next(tr::now);
-	state.top = bottom + style::ConvertScale(34);
-	requestNextButton(state);
-
-	_desiredHeight = state.top + st::nextButton.height + style::ConvertScale(30);
+	_desiredHeight = rowsBottom
+		+ st::wordsNextSkip
+		+ st::wordsNextBottomSkip;
 }
 
 } // namespace Keygen::Steps
