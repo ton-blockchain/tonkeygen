@@ -35,14 +35,17 @@ not_null<Ui::RpWidget*> CreatePublicKeyLabel(
 		not_null<QWidget*> parent,
 		const QString &text) {
 	auto result = Ui::CreateChild<Ui::RpWidget>(parent.get());
+
 	const auto st = result->lifetime().make_state<style::FlatLabel>(
 		st::doneKeyLabel);
 	st->style = ComputeKeyStyle(st->style);
+
 	const auto label = Ui::CreateChild<Ui::FlatLabel>(
 		result,
 		rpl::single(text),
 		*st);
 	label->setBreakEverywhere(true);
+
 	const auto half = text.size() / 2;
 	const auto first = text.mid(0, half);
 	const auto second = text.mid(half);
@@ -52,11 +55,9 @@ not_null<Ui::RpWidget*> CreatePublicKeyLabel(
 	) + st->style.font->spacew / 2;
 	label->resizeToWidth(width);
 	label->setSelectable(true);
-	label->move(st::doneKeyMargins.left(), st::doneKeyMargins.top());
-	const auto height = label->height();
-	result->resize(
-		st::doneKeyMargins.left() + width + st::doneKeyMargins.right(),
-		st::doneKeyMargins.top() + height + st::doneKeyMargins.bottom());
+	label->move(0, 0);
+	result->resize(label->size());
+
 	result->paintRequest(
 	) | rpl::start_with_next([=](QRect clip) {
 		auto p = QPainter(result);
@@ -67,6 +68,7 @@ not_null<Ui::RpWidget*> CreatePublicKeyLabel(
 			st::roundRadiusSmall,
 			st::roundRadiusSmall);
 	}, result->lifetime());
+
 	return result;
 }
 

@@ -9,6 +9,7 @@ using "ui/widgets/widgets.style";
 
 windowSize: size(640px, 480px);
 windowSizeMin: size(480px, 400px);
+messageBoxWidth: 320px;
 
 scrollArea: ScrollArea(defaultScrollArea) {
 	round: 3px;
@@ -128,8 +129,8 @@ doneKeyLabel: FlatLabel(defaultFlatLabel) {
 	}
 	align: align(center);
 	minWidth: 50px;
+	margin: margins(28px, 16px, 28px, 16px);
 }
 doneKeyTop: 144px;
-doneKeyMargins: margins(28px, 16px, 28px, 16px);
 doneCopyTop: 290px;
 doneSaveTop: 344px;

@@ -14,6 +14,7 @@
 #include "ton/ton_utility.h"
 #include "base/platform/base_platform_info.h"
 #include "base/call_delayed.h"
+#include "base/openssl_help.h"
 #include "styles/style_keygen.h"
 #include "styles/style_widgets.h"
 #include "styles/palette.h"
@@ -113,6 +114,11 @@ void Application::initTonLib() {
 		_state = State::WaitingRandom;
 		checkRandomSeed();
 	}, errorHandler());
+
+	crl::async([] {
+		// Init random, because it is slow.
+		static_cast<void>(openssl::RandomValue<uint8>());
+	});
 }
 
 void Application::updateWindowPalette() {
