@@ -126,6 +126,10 @@ void Step::setFocus() {
 	inner()->setFocus();
 }
 
+rpl::lifetime &Step::lifetime() {
+	return widget()->lifetime();
+}
+
 void Step::requestNextButton(NextButtonState state) {
 	_nextButtonState = state;
 }

@@ -33,6 +33,8 @@ public:
 
 	[[nodiscard]] rpl::producer<QByteArray> generateRequests() const;
 	[[nodiscard]] rpl::producer<std::vector<QString>> checkRequests() const;
+	[[nodiscard]] rpl::producer<> copyKeyRequests() const;
+	[[nodiscard]] rpl::producer<> saveKeyRequests() const;
 
 	void next();
 	void back();
@@ -45,11 +47,10 @@ public:
 	void showCheckDone(const QString &publicKey);
 	void showCheckFail();
 	void showDone(const QString &publicKey);
-
-	void showBox(
-		object_ptr<Ui::BoxContent> box,
-		Ui::LayerOptions options = Ui::LayerOption::KeepOther,
-		anim::type animated = anim::type::normal);
+	void showCopyKeyDone();
+	void showSaveKeyDone(const QString &path);
+	void showSaveKeyFail();
+	void showError(const QString &text);
 
 private:
 	void showStep(
@@ -71,6 +72,8 @@ private:
 
 	rpl::event_stream<QByteArray> _generateRequests;
 	rpl::event_stream<std::vector<QString>> _checkRequests;
+	rpl::event_stream<> _copyKeyRequests;
+	rpl::event_stream<> _saveKeyRequests;
 
 };
 

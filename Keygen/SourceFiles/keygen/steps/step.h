@@ -45,6 +45,8 @@ public:
 
 	virtual void setFocus();
 
+	rpl::lifetime &lifetime();
+
 protected:
 	[[nodiscard]] not_null<Ui::RpWidget*> inner() const;
 

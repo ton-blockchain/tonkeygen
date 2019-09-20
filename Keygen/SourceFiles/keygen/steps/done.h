@@ -14,8 +14,14 @@ class Done final : public Step {
 public:
 	explicit Done(const QString &publicKey);
 
+	[[nodiscard]] rpl::producer<> copyKeyRequests() const;
+	[[nodiscard]] rpl::producer<> saveKeyRequests() const;
+
 private:
 	void initControls(const QString &publicKey);
+
+	rpl::event_stream<> _copyKeyRequests;
+	rpl::event_stream<> _saveKeyRequests;
 
 };
 

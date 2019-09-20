@@ -12,7 +12,10 @@
 #include "ui/rp_widget.h"
 #include "ui/message_box.h"
 #include "ton/ton_utility.h"
+#include "base/platform/base_platform_info.h"
+#include "base/call_delayed.h"
 #include "styles/style_keygen.h"
+#include "styles/style_widgets.h"
 #include "styles/palette.h"
 
 #include <QtCore/QStandardPaths>
@@ -20,8 +23,16 @@
 #include <QtGui/QtEvents>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
+#include <QtWidgets/QFileDialog>
 
 namespace Keygen {
+namespace {
+
+[[nodiscard]] QString AllFilesFilter() {
+	return Platform::IsWindows() ? "All Files (*.*)" : "All Files (*)";
+}
+
+} // namespace
 
 Application::Application()
 : _window(std::make_unique<Ui::RpWidget>())
@@ -46,15 +57,22 @@ void Application::initSteps() {
 
 	_steps->generateRequests(
 	) | rpl::start_with_next([=](const QByteArray &seed) {
-		Expects(!seed.isEmpty());
-
-		_randomSeed = seed;
-		checkRandomSeed();
+		setRandomSeed(seed);
 	}, _lifetime);
 
 	_steps->checkRequests(
 	) | rpl::start_with_next([=](std::vector<QString> &&words) {
 		checkWords(std::move(words));
+	}, _lifetime);
+
+	_steps->copyKeyRequests(
+	) | rpl::start_with_next([=] {
+		copyPublicKey();
+	}, _lifetime);
+
+	_steps->saveKeyRequests(
+	) | rpl::start_with_next([=] {
+		savePublicKey();
 	}, _lifetime);
 
 	_steps->showIntro();
@@ -135,17 +153,16 @@ Fn<void(Ton::Error)> Application::errorHandler() {
 				_steps->showCheckFail();
 			}
 		} else {
-			_steps->showBox(Box([=](not_null<Ui::GenericBox*> box) {
-				Ui::InitMessageBox(
-					box,
-					rpl::single(QString("Error")),
-					rpl::single(Ui::Text::WithEntities(error.code)));
-				box->addButton(
-					rpl::single(QString("OK")),
-					[=] { box->closeBox(); });
-			}));
+			_steps->showError(text);
 		}
 	};
+}
+
+void Application::setRandomSeed(const QByteArray &seed) {
+	Expects(!seed.isEmpty());
+
+	_randomSeed = seed;
+	checkRandomSeed();
 }
 
 void Application::checkRandomSeed() {
@@ -191,6 +208,47 @@ void Application::checkWords(std::vector<QString> &&words) {
 			_state = State::Created;
 		}
 	});
+}
+
+void Application::copyPublicKey() {
+	Expects(_key.has_value());
+
+	QGuiApplication::clipboard()->setText(_key->publicKey);
+	_steps->showCopyKeyDone();
+}
+
+void Application::savePublicKey() {
+	Expects(_key.has_value());
+
+	const auto key = _key->publicKey;
+	const auto delay = st::defaultRippleAnimation.hideDuration;
+	base::call_delayed(delay, _steps->content(), [=] {
+		savePublicKeyNow(key);
+	});
+}
+
+void Application::savePublicKeyNow(const QByteArray &key) {
+	const auto filter = QString("Text Files (*.txt);;All Files (*.*)");
+	const auto fail = crl::guard(_steps->content(), [=] {
+		_steps->showSaveKeyFail();
+	});
+	const auto done = crl::guard(_steps->content(), [=](QString path) {
+		_steps->showSaveKeyDone(path);
+	});
+	const auto path = QFileDialog::getSaveFileName(
+		_steps->content()->window(),
+		tr::lng_done_save_caption(tr::now),
+		"public_key.txt",
+		filter);
+	if (path.isEmpty()) {
+		return;
+	}
+	auto file = QFile(path);
+	if (file.open(QIODevice::WriteOnly) && file.write(key) == key.size()) {
+		done(path);
+	} else {
+		fail();
+	}
 }
 
 } // namespace Core

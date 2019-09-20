@@ -16,8 +16,11 @@
 #include "ui/wrap/fade_wrap.h"
 #include "ui/widgets/buttons.h"
 #include "ui/text/text_utilities.h"
+#include "ui/toast/toast.h"
 #include "ui/rp_widget.h"
 #include "ui/message_box.h"
+#include "base/platform/base_platform_file_utilities.h"
+#include "base/call_delayed.h"
 #include "styles/style_keygen.h"
 
 namespace Keygen::Steps {
@@ -25,6 +28,7 @@ namespace {
 
 constexpr auto kSeedLengthMin = 50;
 constexpr auto kSeedLengthMax = 200;
+constexpr auto kSaveKeyDoneDuration = crl::time(500);
 
 } // namespace
 
@@ -81,7 +85,7 @@ void Manager::showRandomSeed() {
 		1
 	) | rpl::start_with_next([=] {
 		raw->showLimit(kSeedLengthMax);
-	}, raw->widget()->lifetime());
+	}, raw->lifetime());
 
 	showStep(std::move(seed), [=] {
 		const auto text = raw->accumulated();
@@ -125,7 +129,7 @@ void Manager::showCheck() {
 }
 
 void Manager::showCheckDone(const QString &publicKey) {
-	showBox(Box([=](not_null<Ui::GenericBox*> box) {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
 		Ui::InitMessageBox(
 			box,
 			tr::lng_check_good_title(),
@@ -137,7 +141,7 @@ void Manager::showCheckDone(const QString &publicKey) {
 }
 
 void Manager::showCheckFail() {
-	showBox(Box([=](not_null<Ui::GenericBox*> box) {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
 		Ui::InitMessageBox(
 			box,
 			tr::lng_check_bad_title(),
@@ -150,14 +154,45 @@ void Manager::showCheckFail() {
 }
 
 void Manager::showDone(const QString &publicKey) {
-	showStep(std::make_unique<Done>(publicKey));
+	auto done = std::make_unique<Done>(publicKey);
+	done->copyKeyRequests(
+	) | rpl::start_to_stream(_copyKeyRequests, done->lifetime());
+	done->saveKeyRequests(
+	) | rpl::start_to_stream(_saveKeyRequests, done->lifetime());
+	showStep(std::move(done));
 }
 
-void Manager::showBox(
-		object_ptr<Ui::BoxContent> box,
-		Ui::LayerOptions options,
-		anim::type animated) {
-	_layerManager.showBox(std::move(box), options, animated);
+void Manager::showCopyKeyDone() {
+	Ui::Toast::Show(_content.get(), tr::lng_done_to_clipboard(tr::now));
+}
+
+void Manager::showSaveKeyDone(const QString &path) {
+	auto config = Ui::Toast::Config();
+	config.text = tr::lng_done_to_file(tr::now);
+	config.durationMs = kSaveKeyDoneDuration;
+	Ui::Toast::Show(_content.get(), config);
+	const auto delay = st::toastFadeInDuration
+		+ kSaveKeyDoneDuration
+		+ st::toastFadeOutDuration;
+	base::call_delayed(delay, _content.get(), [=] {
+		base::Platform::ShowInFolder(path);
+	});
+}
+
+void Manager::showSaveKeyFail() {
+	showError("Could not write this file :(");
+}
+
+void Manager::showError(const QString &text) {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
+		Ui::InitMessageBox(
+			box,
+			rpl::single(QString("Error")),
+			rpl::single(Ui::Text::WithEntities(text)));
+		box->addButton(
+			rpl::single(QString("OK")),
+			[=] { box->closeBox(); });
+	}));
 }
 
 void Manager::showStep(
@@ -215,6 +250,14 @@ rpl::producer<QByteArray> Manager::generateRequests() const {
 
 rpl::producer<std::vector<QString>> Manager::checkRequests() const {
 	return _checkRequests.events();
+}
+
+rpl::producer<> Manager::copyKeyRequests() const {
+	return _copyKeyRequests.events();
+}
+
+rpl::producer<> Manager::saveKeyRequests() const {
+	return _saveKeyRequests.events();
 }
 
 } // namespace Keygen::Steps

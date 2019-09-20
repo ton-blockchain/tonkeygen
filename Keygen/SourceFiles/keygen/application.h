@@ -43,8 +43,12 @@ private:
 	void updateWindowPalette();
 	void handleWindowEvent(not_null<QEvent*> e);
 	void handleWindowKeyPress(not_null<QKeyEvent*> e);
+	void setRandomSeed(const QByteArray &seed);
 	void checkRandomSeed();
 	void checkWords(std::vector<QString> &&words);
+	void copyPublicKey();
+	void savePublicKey();
+	void savePublicKeyNow(const QByteArray &key);
 
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
