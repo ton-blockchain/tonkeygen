@@ -58,8 +58,10 @@ void Sandbox::run() {
 
 void Sandbox::launchApplication() {
 	_application = std::make_unique<Keygen::Application>();
-	connect(this, &Sandbox::aboutToQuit, [=]() mutable {
-		_application = nullptr;
+	connect(this, &Sandbox::aboutToQuit, [=] {
+		customEnterFromEventLoop([&] {
+			_application = nullptr;
+		});
 	});
 	_application->run();
 }

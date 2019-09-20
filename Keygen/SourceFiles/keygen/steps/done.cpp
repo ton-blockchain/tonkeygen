@@ -27,7 +27,7 @@ void Done::initControls(const QString &publicKey) {
 	) | rpl::start_with_next([=](QSize size) {
 		key->move(
 			(size.width() - key->width()) / 2,
-			(size.height() * 3 / 4));
+			(size.height() * 5 / 8));
 	}, inner()->lifetime());
 }
 

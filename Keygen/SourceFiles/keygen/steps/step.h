@@ -6,7 +6,7 @@
 //
 #pragma once
 
-#include "base/object_ptr.h"
+#include "base/unique_qptr.h"
 
 struct TextWithEntities;
 
@@ -58,8 +58,8 @@ private:
 	Ui::ScrollArea * const _scroll = nullptr;
 	const not_null<Ui::RpWidget*> _inner;
 
-	object_ptr<Ui::FlatLabel> _title = { nullptr };
-	object_ptr<Ui::FlatLabel> _description = { nullptr };
+	base::unique_qptr<Ui::FlatLabel> _title;
+	base::unique_qptr<Ui::FlatLabel> _description;
 
 	const std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
 	NextButtonState _lastNextState;

@@ -8,7 +8,9 @@
 
 #include "keygen/steps/manager.h"
 #include "keygen/phrases.h"
+#include "ui/text/text_utilities.h"
 #include "ui/rp_widget.h"
+#include "ui/message_box.h"
 #include "ton/ton_utility.h"
 #include "styles/style_keygen.h"
 #include "styles/palette.h"
@@ -127,7 +129,22 @@ void Application::handleWindowKeyPress(not_null<QKeyEvent*> e) {
 
 Fn<void(Ton::Error)> Application::errorHandler() {
 	return [=](Ton::Error error) {
-		const auto test = error.code;// #TODO show error
+		const auto text = error.code;
+		if (text.endsWith(qstr("Invalid mnemonic words or password (invalid checksum)"))) {
+			if (_state == State::Checking) {
+				_steps->showCheckFail();
+			}
+		} else {
+			_steps->showBox(Box([=](not_null<Ui::GenericBox*> box) {
+				Ui::InitMessageBox(
+					box,
+					rpl::single(QString("Error")),
+					rpl::single(Ui::Text::WithEntities(error.code)));
+				box->addButton(
+					rpl::single(QString("OK")),
+					[=] { box->closeBox(); });
+			}));
+		}
 	};
 }
 
@@ -167,10 +184,12 @@ void Application::checkWords(std::vector<QString> &&words) {
 
 	Ton::CheckKey(key, [=] {
 		_state = State::Created;
-		_steps->showDone(_key->publicKey);
+		_steps->showCheckDone(_key->publicKey);
 	}, [=](Ton::Error error) {
-		_state = State::Created;
 		errorHandler()(error);
+		if (_state == State::Checking) {
+			_state = State::Created;
+		}
 	});
 }
 

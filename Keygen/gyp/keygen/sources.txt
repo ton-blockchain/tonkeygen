@@ -27,6 +27,8 @@
 <(src_loc)/keygen/steps/view.cpp
 <(src_loc)/keygen/steps/view.h
 <(src_loc)/keygen/tr.h
+<(src_loc)/ui/message_box.cpp
+<(src_loc)/ui/message_box.h
 
 platforms: win
 <(res_loc)/win/Keygen.rc

@@ -6,9 +6,10 @@
 //
 #pragma once
 
-#include "base/object_ptr.h"
 #include "keygen/steps/step.h"
 #include "ui/effects/animations.h"
+#include "ui/layers/layer_manager.h"
+#include "base/unique_qptr.h"
 
 namespace Ui {
 class RpWidget;
@@ -41,7 +42,14 @@ public:
 	void showCreated(std::vector<QString> &&words);
 	void showWords(std::vector<QString> &&words);
 	void showCheck();
+	void showCheckDone(const QString &publicKey);
+	void showCheckFail();
 	void showDone(const QString &publicKey);
+
+	void showBox(
+		object_ptr<Ui::BoxContent> box,
+		Ui::LayerOptions options = Ui::LayerOption::KeepOther,
+		anim::type animated = anim::type::normal);
 
 private:
 	void showStep(
@@ -50,8 +58,9 @@ private:
 		FnMut<void()> back = nullptr);
 
 	const std::unique_ptr<Ui::RpWidget> _content;
-	const object_ptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
+	const base::unique_qptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
 	NextButtonState _lastNextState;
+	Ui::LayerManager _layerManager;
 
 	std::vector<QString> _words;
 

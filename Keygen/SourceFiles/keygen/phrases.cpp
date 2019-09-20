@@ -37,7 +37,7 @@ phrase lng_check_bad_text = { "The words you have entered are not\nthe same as i
 phrase lng_check_bad_view_words = { "View words" };
 phrase lng_check_bad_try_again = { "Try again" };
 phrase lng_check_good_title = { "Well done" };
-phrase lng_check_good_text = { "The words are correct. Please make\nsure you don't lose this list and not\nhare it with anyone." };
+phrase lng_check_good_text = { "The words are correct. Please make\nsure you don't lose this list and not\nshare it with anyone." };
 phrase lng_check_good_next = { "Continue" };
 
 phrase lng_done_title = { "Your public key" };

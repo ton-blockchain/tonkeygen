@@ -7,7 +7,6 @@
 #pragma once
 
 #include "keygen/steps/step.h"
-#include "base/object_ptr.h"
 
 namespace Ui {
 class FlatLabel;

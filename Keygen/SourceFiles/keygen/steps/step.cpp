@@ -93,7 +93,7 @@ not_null<Ui::RpWidget*> Step::inner() const {
 }
 
 void Step::setTitle(rpl::producer<TextWithEntities> text) {
-	_title.create(inner(), std::move(text));
+	_title.emplace(inner(), std::move(text));
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
@@ -105,7 +105,7 @@ void Step::setTitle(rpl::producer<TextWithEntities> text) {
 }
 
 void Step::setDescription(rpl::producer<TextWithEntities> text) {
-	_description.create(inner(), std::move(text));
+	_description.emplace(inner(), std::move(text));
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
