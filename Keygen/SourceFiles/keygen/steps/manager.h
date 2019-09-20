@@ -14,6 +14,7 @@
 namespace Ui {
 class RpWidget;
 class RoundButton;
+class IconButton;
 template <typename Widget>
 class FadeWrap;
 } // namespace Ui
@@ -68,6 +69,7 @@ private:
 
 	const std::unique_ptr<Ui::RpWidget> _content;
 	const base::unique_qptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
+	const base::unique_qptr<Ui::FadeWrap<Ui::IconButton>> _backButton;
 	NextButtonState _lastNextState;
 	Ui::LayerManager _layerManager;
 

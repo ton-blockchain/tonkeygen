@@ -41,11 +41,15 @@ Manager::Manager()
 		_content.get(),
 		rpl::single(QString()),
 		st::nextButton))
+, _backButton(
+	std::in_place,
+	_content.get(),
+	object_ptr<Ui::IconButton>(_content.get(), st::topBackButton))
 , _layerManager(_content.get()) {
-	_nextButton->entity()->clicks(
-	) | rpl::start_with_next([=] {
-		next();
-	}, _nextButton->lifetime());
+	_nextButton->entity()->setClickedCallback([=] { next(); });
+	_backButton->entity()->setClickedCallback([=] { back(); });
+	_backButton->toggle(false, anim::type::instant);
+	_backButton->move(0, 0);
 }
 
 Manager::~Manager() = default;
@@ -101,9 +105,7 @@ void Manager::showCreated(std::vector<QString> &&words) {
 	auto next = [=, list = std::move(words)]() mutable {
 		showWords(std::move(list));
 	};
-	showStep(std::make_unique<Created>(), std::move(next), [=] {
-		showRandomSeed();
-	});
+	showStep(std::make_unique<Created>(), std::move(next));
 }
 
 void Manager::showWords(std::vector<QString> &&words) {
@@ -234,7 +236,9 @@ void Manager::showStep(
 	) | rpl::map([](const NextButtonState &state) {
 		return !state.text.isEmpty();
 	}));
+	_backButton->toggle(_back != nullptr, anim::type::normal);
 	_nextButton->raise();
+	_backButton->raise();
 	_layerManager.raise();
 
 	rpl::combine(
