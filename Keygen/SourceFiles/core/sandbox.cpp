@@ -101,6 +101,7 @@ void Sandbox::setupScreenScale() {
 		style::SetDevicePixelRatio(int(ratio));
 		setScale(style::kScaleDefault);
 	}
+	setScale(100); // #TODO remove
 }
 
 void Sandbox::setScale(int scale) {

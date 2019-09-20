@@ -7,6 +7,12 @@
 #pragma once
 
 #include "keygen/steps/step.h"
+#include "base/unique_qptr.h"
+
+namespace Ui {
+class IconButton;
+class DropdownMenu;
+} // namespace Ui
 
 namespace Keygen::Steps {
 
@@ -16,12 +22,20 @@ public:
 
 	[[nodiscard]] rpl::producer<> copyKeyRequests() const;
 	[[nodiscard]] rpl::producer<> saveKeyRequests() const;
+	[[nodiscard]] rpl::producer<> newKeyRequests() const;
+	[[nodiscard]] rpl::producer<> verifyKeyRequests() const;
 
 private:
 	void initControls(const QString &publicKey);
+	void initShortcuts();
+	void showMenu(not_null<Ui::IconButton*> toggle);
 
 	rpl::event_stream<> _copyKeyRequests;
 	rpl::event_stream<> _saveKeyRequests;
+	rpl::event_stream<> _newKeyRequests;
+	rpl::event_stream<> _verifyKeyRequests;
+
+	base::unique_qptr<Ui::DropdownMenu> _menu;
 
 };
 

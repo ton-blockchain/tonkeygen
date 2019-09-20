@@ -49,7 +49,9 @@ private:
 	void copyPublicKey();
 	void savePublicKey();
 	void savePublicKeyNow(const QByteArray &key);
+	void startNewKey();
 
+	[[nodiscard]] std::vector<QString> collectWords() const;
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
 	const std::unique_ptr<Ui::RpWidget> _window;

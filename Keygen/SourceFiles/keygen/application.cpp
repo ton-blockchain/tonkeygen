@@ -65,14 +65,16 @@ void Application::initSteps() {
 		checkWords(std::move(words));
 	}, _lifetime);
 
-	_steps->copyKeyRequests(
-	) | rpl::start_with_next([=] {
-		copyPublicKey();
-	}, _lifetime);
-
-	_steps->saveKeyRequests(
-	) | rpl::start_with_next([=] {
-		savePublicKey();
+	using Action = Steps::Manager::Action;
+	_steps->actionRequests(
+	) | rpl::start_with_next([=](Action action) {
+		switch (action) {
+		case Action::ShowWords: return _steps->showWords(collectWords());
+		case Action::CopyKey: return copyPublicKey();
+		case Action::SaveKey: return savePublicKey();
+		case Action::NewKey: return startNewKey();
+		}
+		Unexpected("Action in actionRequests.");
 	}, _lifetime);
 
 	_steps->showIntro();
@@ -173,13 +175,7 @@ void Application::checkRandomSeed() {
 	Ton::CreateKey(_randomSeed, [=](Ton::Key key) {
 		_key = key;
 		_state = State::Created;
-
-		auto list = ranges::view::all(
-			_key->words
-		) | ranges::view::transform([](const QByteArray &word) {
-			return QString::fromUtf8(word);
-		}) | ranges::to_vector;
-		_steps->showCreated(std::move(list));
+		_steps->showCreated(collectWords());
 	}, errorHandler());
 }
 
@@ -249,6 +245,24 @@ void Application::savePublicKeyNow(const QByteArray &key) {
 	} else {
 		fail();
 	}
+}
+
+void Application::startNewKey() {
+	_key = std::nullopt;
+	if (_state != State::Starting) {
+		_state = State::WaitingRandom;
+	}
+	_steps->showIntro();
+}
+
+std::vector<QString> Application::collectWords() const {
+	Expects(_key.has_value());
+
+	return ranges::view::all(
+		_key->words
+	) | ranges::view::transform([](const QByteArray &word) {
+		return QString::fromUtf8(word);
+	}) | ranges::to_vector;
 }
 
 } // namespace Core

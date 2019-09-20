@@ -107,7 +107,7 @@ void Manager::showCreated(std::vector<QString> &&words) {
 }
 
 void Manager::showWords(std::vector<QString> &&words) {
-	_words = words;
+	_tmpwords = words; // #TODO don't save words
 	showStep(std::make_unique<View>(std::move(words)), [=] {
 		showCheck();
 	});
@@ -115,17 +115,16 @@ void Manager::showWords(std::vector<QString> &&words) {
 
 void Manager::showCheck() {
 	//auto check = std::make_unique<Check>(); // #TODO don't pass words
-	auto words = _words;
+	auto words = _tmpwords;
 	words.pop_back();
 	auto check = std::make_unique<Check>(words);
 
 	const auto raw = check.get();
-	auto back = _words.empty()
-		? Fn<void()>()
-		: [=] { showWords(base::duplicate(_words)); };
 	showStep(std::move(check), [=] {
 		_checkRequests.fire(raw->words());
-	}, back);
+	}, [=] {
+		_actionRequests.fire(Action::ShowWords);
+	});
 }
 
 void Manager::showCheckDone(const QString &publicKey) {
@@ -156,9 +155,21 @@ void Manager::showCheckFail() {
 void Manager::showDone(const QString &publicKey) {
 	auto done = std::make_unique<Done>(publicKey);
 	done->copyKeyRequests(
-	) | rpl::start_to_stream(_copyKeyRequests, done->lifetime());
+	) | rpl::map([] {
+		return Action::CopyKey;
+	}) | rpl::start_to_stream(_actionRequests, done->lifetime());
 	done->saveKeyRequests(
-	) | rpl::start_to_stream(_saveKeyRequests, done->lifetime());
+	) | rpl::map([] {
+		return Action::SaveKey;
+	}) | rpl::start_to_stream(_actionRequests, done->lifetime());
+	done->newKeyRequests(
+	) | rpl::start_with_next([=] {
+		confirmNewKey();
+	}, done->lifetime());
+	done->verifyKeyRequests(
+	) | rpl::start_with_next([=] {
+		showCheck();
+	}, done->lifetime());
 	showStep(std::move(done));
 }
 
@@ -244,6 +255,19 @@ void Manager::showStep(
 	_step->setFocus();
 }
 
+void Manager::confirmNewKey() {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
+		Ui::InitMessageBox(
+			box,
+			tr::lng_done_new_title(),
+			tr::lng_done_new_text(Ui::Text::RichLangValue));
+		box->addButton(
+			tr::lng_done_new_ok(),
+			[=] { _actionRequests.fire(Action::NewKey); });
+		box->addButton(tr::lng_done_new_cancel(), [=] { box->closeBox(); });
+	}));
+}
+
 rpl::producer<QByteArray> Manager::generateRequests() const {
 	return _generateRequests.events();
 }
@@ -252,12 +276,8 @@ rpl::producer<std::vector<QString>> Manager::checkRequests() const {
 	return _checkRequests.events();
 }
 
-rpl::producer<> Manager::copyKeyRequests() const {
-	return _copyKeyRequests.events();
-}
-
-rpl::producer<> Manager::saveKeyRequests() const {
-	return _saveKeyRequests.events();
+rpl::producer<Manager::Action> Manager::actionRequests() const {
+	return _actionRequests.events();
 }
 
 } // namespace Keygen::Steps

@@ -21,3 +21,6 @@ checkInputField: InputField(defaultInputField) {
 	textMargins: margins(0px, 6px, 0px, 4px);
 	heightMin: 32px;
 }
+
+doneMenuTogglePosition: point(8px, 16px);
+doneMenuPosition: point(2px, 40px);

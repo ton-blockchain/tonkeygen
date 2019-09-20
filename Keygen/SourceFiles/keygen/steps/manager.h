@@ -33,8 +33,15 @@ public:
 
 	[[nodiscard]] rpl::producer<QByteArray> generateRequests() const;
 	[[nodiscard]] rpl::producer<std::vector<QString>> checkRequests() const;
-	[[nodiscard]] rpl::producer<> copyKeyRequests() const;
-	[[nodiscard]] rpl::producer<> saveKeyRequests() const;
+
+	enum class Action {
+		ShowWords,
+		CopyKey,
+		SaveKey,
+		NewKey,
+	};
+
+	[[nodiscard]] rpl::producer<Action> actionRequests() const;
 
 	void next();
 	void back();
@@ -57,13 +64,14 @@ private:
 		std::unique_ptr<Step> step,
 		FnMut<void()> next = nullptr,
 		FnMut<void()> back = nullptr);
+	void confirmNewKey();
 
 	const std::unique_ptr<Ui::RpWidget> _content;
 	const base::unique_qptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
 	NextButtonState _lastNextState;
 	Ui::LayerManager _layerManager;
 
-	std::vector<QString> _words;
+	std::vector<QString> _tmpwords;
 
 	std::unique_ptr<Step> _step;
 
@@ -72,8 +80,7 @@ private:
 
 	rpl::event_stream<QByteArray> _generateRequests;
 	rpl::event_stream<std::vector<QString>> _checkRequests;
-	rpl::event_stream<> _copyKeyRequests;
-	rpl::event_stream<> _saveKeyRequests;
+	rpl::event_stream<Action> _actionRequests;
 
 };
 
