@@ -159,4 +159,11 @@ void Step::requestNextButton(NextButtonState state) {
 	_nextButtonState = state;
 }
 
+void Step::ensureVisible(int top, int height) {
+	Expects(_type == Type::Scroll);
+	Expects(_scroll != nullptr);
+
+	_scroll->scrollToY(top, top + height);
+}
+
 } // namespace Keygen::Steps

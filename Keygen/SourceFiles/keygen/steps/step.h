@@ -54,6 +54,7 @@ protected:
 	void setTitle(rpl::producer<TextWithEntities> text, int top = 0);
 	void setDescription(rpl::producer<TextWithEntities> text, int top = 0);
 	void requestNextButton(NextButtonState state);
+	void ensureVisible(int top, int height);
 
 private:
 	const Type _type = Type();

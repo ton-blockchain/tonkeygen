@@ -122,8 +122,16 @@ void Manager::showCheck() {
 	auto check = std::make_unique<Check>(words);
 
 	const auto raw = check.get();
+
+	raw->submitRequests(
+	) | rpl::start_with_next([=] {
+		next();
+	}, raw->lifetime());
+
 	showStep(std::move(check), [=] {
-		_checkRequests.fire(raw->words());
+		if (raw->checkAll()) {
+			_checkRequests.fire(raw->words());
+		}
 	}, [=] {
 		_actionRequests.fire(Action::ShowWords);
 	});

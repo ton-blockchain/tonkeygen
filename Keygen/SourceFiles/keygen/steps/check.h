@@ -17,12 +17,20 @@ public:
 	int desiredHeight() const override;
 
 	[[nodiscard]] std::vector<QString> words() const;
+	[[nodiscard]] rpl::producer<> submitRequests() const;
+
+	void setFocus() override;
+	bool checkAll();
 
 private:
 	void initControls(const std::vector<QString> &values);
 
 	int _desiredHeight = 0;
 	Fn<std::vector<QString>()> _words;
+	Fn<void()> _setFocus;
+	Fn<bool()> _checkAll;
+
+	rpl::event_stream<> _submitRequests;
 
 };
 
