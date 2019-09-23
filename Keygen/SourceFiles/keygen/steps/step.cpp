@@ -18,6 +18,17 @@
 
 namespace Keygen::Steps {
 
+struct Step::AnimationData {
+	Type type = Type();
+	std::unique_ptr<Ui::LottieAnimation> lottie;
+	int lottieTop = 0;
+	int lottieHeight = 0;
+	Ui::CrossFadeAnimation::Data title;
+	Ui::CrossFadeAnimation::Data description;
+	QPixmap contentSnapshot;
+	int contentBottom = 0;
+};
+
 Step::CoverAnimation::~CoverAnimation() = default;
 
 Step::Step(Type type)
@@ -25,8 +36,9 @@ Step::Step(Type type)
 , _widget(std::make_unique<Ui::RpWidget>())
 , _scroll(resolveScrollArea())
 , _inner(resolveInner())
+, _coverShown(type == Type::Intro ? 1. : 0.)
 , _nextButton(resolveNextButton()) {
-	initScroll();
+	initGeometry();
 	initNextButton();
 	initCover();
 }
@@ -42,7 +54,7 @@ Ui::ScrollArea *Step::resolveScrollArea() {
 not_null<Ui::RpWidget*> Step::resolveInner() {
 	return _scroll
 		? _scroll->setOwnedWidget(object_ptr<Ui::RpWidget>(_scroll)).data()
-		: _widget.get();
+		: Ui::CreateChild<Ui::RpWidget>(_widget.get());
 }
 
 std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>> Step::resolveNextButton() {
@@ -56,19 +68,18 @@ std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>> Step::resolveNextButton() {
 		: nullptr;
 }
 
-void Step::initScroll() {
-	if (!_scroll) {
-		return;
-	}
+void Step::initGeometry() {
 	_widget->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		_scroll->setGeometry({ QPoint(), size });
+		if (_scroll) {
+			_scroll->setGeometry({ QPoint(), size });
+		}
 		_inner->setGeometry(
 			0,
 			0,
 			size.width(),
 			std::max(desiredHeight(), size.height()));
-	}, _scroll->lifetime());
+	}, _inner->lifetime());
 }
 
 void Step::initNextButton() {
@@ -102,28 +113,31 @@ void Step::initCover() {
 		return;
 	} else if (_type == Type::Intro) {
 		prepareCoverMask();
+
+		inner()->paintRequest(
+		) | rpl::start_with_next([=](QRect clip) {
+			auto p = QPainter(inner());
+			paintCover(p, 0, clip);
+		}, inner()->lifetime());
 	}
-	inner()->paintRequest(
+
+	_widget->paintRequest(
 	) | rpl::start_with_next([=](QRect clip) {
 		paintContent(clip);
-	}, inner()->lifetime());
+	}, _widget->lifetime());
 }
 
 void Step::paintContent(QRect clip) {
 	const auto isIntro = (_type == Type::Intro);
-	const auto dt = _a_show.value(1.);
-	if (!_a_show.animating()) {
-		if (isIntro) {
-			auto p = QPainter(inner());
-			paintCover(p, 0, clip);
-		}
+	const auto dt = _showAnimation.value(1.);
+	if (!_showAnimation.animating()) {
 		if (_coverAnimation.title) {
 			showFinished();
 		}
 		return;
 	}
 
-	auto p = QPainter(inner());
+	auto p = QPainter(_widget.get());
 	const auto progress = isIntro
 		? anim::easeOutCirc(1., dt)
 		: anim::linear(1., dt);
@@ -138,16 +152,46 @@ void Step::paintContent(QRect clip) {
 	paintCover(p, coverTop, clip);
 
 	const auto positionReady = isIntro ? showCoverMethod : hideCoverMethod;
-	_coverAnimation.title->paintFrame(p, positionReady, departingAlpha, arrivingAlpha);
-	_coverAnimation.description->paintFrame(p, positionReady, departingAlpha, arrivingAlpha);
+	_coverAnimation.title->paintFrame(
+		p,
+		positionReady,
+		departingAlpha,
+		arrivingAlpha);
+	_coverAnimation.description->paintFrame(
+		p,
+		positionReady,
+		departingAlpha,
+		arrivingAlpha);
 
-	//paintContentSnapshot(p, _coverAnimation.contentSnapshotWas, departingAlpha, showCoverMethod);
-	//paintContentSnapshot(p, _coverAnimation.contentSnapshotNow, arrivingAlpha, 1. - hideCoverMethod);
+	paintContentSnapshot(
+		p,
+		_coverAnimation.contentSnapshotWas,
+		_coverAnimation.contentWasBottom,
+		departingAlpha,
+		showCoverMethod);
+	paintContentSnapshot(
+		p,
+		_coverAnimation.contentSnapshotNow,
+		_coverAnimation.contentNowBottom,
+		arrivingAlpha,
+		1. - hideCoverMethod);
 }
 
 void Step::showFinished() {
-	_a_show.stop();
+	_showAnimation.stop();
+	if (_type != Type::Intro && _coverAnimation.lottie) {
+		_lottie = std::move(_coverAnimation.lottie);
+		_lottie->attach(inner());
+		_lottie->setOpacity(1.);
+		_lottie->setGeometry(lottieGeometry(
+			contentTop() + _lottieTop,
+			_lottieHeight));
+	}
 	_coverAnimation = CoverAnimation();
+	if (_scroll) {
+		_scroll->show();
+	}
+	inner()->show();
 	//_slideAnimation.reset();
 	//prepareCoverMask();
 	setFocus();
@@ -174,25 +218,62 @@ void Step::paintCover(QPainter &p, int top, QRect clip) {
 	auto left = 0;
 	auto right = 0;
 	if (coverWidth < st::coverMaxWidth) {
-		auto iconsMaxSkip = st::coverMaxWidth - st::coverLeft.width() - st::coverRight.width();
-		auto iconsSkip = st::coverIconsMinSkip + (iconsMaxSkip - st::coverIconsMinSkip) * (coverWidth - st::windowSizeMin.width()) / (st::coverMaxWidth - st::windowSizeMin.width());
-		auto outside = iconsSkip + st::coverLeft.width() + st::coverRight.width() - coverWidth;
+		const auto iconsMaxSkip = st::coverMaxWidth
+			- st::coverLeft.width()
+			- st::coverRight.width();
+		const auto iconsSkip = st::coverIconsMinSkip
+			+ (((iconsMaxSkip - st::coverIconsMinSkip)
+				* (coverWidth - st::windowSizeMin.width()))
+					/ (st::coverMaxWidth - st::windowSizeMin.width()));
+		const auto outside = iconsSkip
+			+ st::coverLeft.width()
+			+ st::coverRight.width()
+			- coverWidth;
 		left = -outside / 2;
 		right = -outside - left;
 	}
 	if (top < 0) {
-		auto shown = float64(coverHeight) / st::coverHeight;
+		const auto shown = float64(coverHeight) / st::coverHeight;
 		auto leftShown = qRound(shown * (left + st::coverLeft.width()));
 		left = leftShown - st::coverLeft.width();
 		auto rightShown = qRound(shown * (right + st::coverRight.width()));
 		right = rightShown - st::coverRight.width();
 	}
-	st::coverLeft.paint(p, left, coverHeight - st::coverLeft.height(), coverWidth);
-	st::coverRight.paint(p, coverWidth - right - st::coverRight.width(), coverHeight - st::coverRight.height(), coverWidth);
+	st::coverLeft.paint(
+		p,
+		left,
+		coverHeight - st::coverLeft.height(),
+		coverWidth);
+	st::coverRight.paint(
+		p,
+		coverWidth - right - st::coverRight.width(),
+		coverHeight - st::coverRight.height(),
+		coverWidth);
 
-	auto planeLeft = (coverWidth - st::coverIcon.width()) / 2 - st::coverIconLeft;
-	auto planeTop = top + st::coverIconTop;
-	st::coverIcon.paint(p, planeLeft, planeTop, coverWidth);
+	const auto iconLeft = (coverWidth - st::coverIcon.width()) / 2;
+	const auto iconTop = top + st::coverIconTop;
+	st::coverIcon.paint(p, iconLeft, iconTop, coverWidth);
+}
+
+void Step::paintContentSnapshot(
+		QPainter &p,
+		const QPixmap &snapshot,
+		int snapshotBottom,
+		float64 alpha,
+		float64 howMuchHidden) {
+	const auto pixelRatio = style::DevicePixelRatio();
+	const auto snapshotWidth = snapshot.width() / pixelRatio;
+	if (!snapshotWidth) {
+		return;
+	}
+	const auto contentTop = anim::interpolate(
+		snapshotBottom - (snapshot.height() / pixelRatio),
+		snapshotBottom,
+		howMuchHidden);
+	p.setOpacity(alpha);
+	p.drawPixmap(
+		QPoint((inner()->width() - snapshotWidth) / 2, contentTop),
+		snapshot);
 }
 
 rpl::producer<> Step::nextClicks() const {
@@ -205,12 +286,43 @@ rpl::producer<> Step::nextClicks() const {
 	});
 }
 
+rpl::producer<float64> Step::coverShown() const {
+	return _coverShown.value();
+}
+
 not_null<Ui::RpWidget*> Step::widget() const {
 	return _widget.get();
 }
 
 int Step::desiredHeight() const {
 	return st::stepHeight;
+}
+
+Step::AnimationData Step::prepareAnimationData() {
+	auto result = AnimationData();
+	result.type = _type;
+	if (_lottie) {
+		_lottie->detach();
+	}
+	result.lottie = std::move(_lottie);
+	result.lottieTop = contentTop() + _lottieTop;
+	result.lottieHeight = _lottieHeight;
+	result.title = _title->crossFadeData(st::windowBg);
+	result.description = _description->crossFadeData(st::windowBg);
+	result.contentSnapshot = prepareContentSnapshot();
+	result.contentBottom = contentBottom();
+	return result;
+}
+
+QPixmap Step::prepareContentSnapshot() const {
+	const auto otherTop = _description->y() + _description->height();
+	const auto otherWidth = _description->width();
+	const auto otherRect = QRect(
+		(inner()->width() - otherWidth) / 2,
+		otherTop,
+		otherWidth,
+		contentBottom() - otherTop);
+	return Ui::GrabWidget(inner(), otherRect);
 }
 
 not_null<Ui::RpWidget*> Step::inner() const {
@@ -220,6 +332,10 @@ not_null<Ui::RpWidget*> Step::inner() const {
 int Step::contentTop() const {
 	const auto desired = desiredHeight();
 	return (std::max(desired, inner()->height()) - desired) / 2;
+}
+
+int Step::contentBottom() const {
+	return contentTop() + desiredHeight();
 }
 
 void Step::setTitle(rpl::producer<TextWithEntities> text, int top) {
@@ -306,10 +422,70 @@ void Step::prepareCoverMask() {
 	_coverMask = Ui::PixmapFromImage(std::move(mask));
 }
 
-void Step::showAnimated() {
+void Step::showAnimated(not_null<Step*> previous) {
+	if ((previous->_type == Type::Intro) != (_type == Type::Intro)) {
+		showAnimatedCover(previous);
+	}
+}
+
+void Step::showAnimatedCover(not_null<Step*> previous) {
 	prepareCoverMask();
-	_a_show.start([=] { inner()->update(); }, 0., 1., st::coverDuration);
-	inner()->update();
+
+	auto was = previous->prepareAnimationData();
+	auto now = prepareAnimationData();
+	if (was.lottie) {
+		_coverAnimation.lottie = std::move(was.lottie);
+		_coverAnimation.lottieTop = was.lottieTop;
+		_coverAnimation.lottieHeight = was.lottieHeight;
+	} else {
+		_coverAnimation.lottie = std::move(now.lottie);
+		_coverAnimation.lottieTop = now.lottieTop;
+		_coverAnimation.lottieHeight = now.lottieHeight;
+	}
+	_coverAnimation.title = std::make_unique<Ui::CrossFadeAnimation>(
+		st::windowBg,
+		std::move(was.title),
+		std::move(now.title));
+	_coverAnimation.description = std::make_unique<Ui::CrossFadeAnimation>(
+		st::windowBg,
+		std::move(was.description),
+		std::move(now.description));
+	_coverAnimation.contentSnapshotWas = std::move(was.contentSnapshot);
+	_coverAnimation.contentWasBottom = was.contentBottom;
+	_coverAnimation.contentSnapshotNow = std::move(now.contentSnapshot);
+	_coverAnimation.contentNowBottom = now.contentBottom;
+
+	if (_coverAnimation.lottie) {
+		_coverAnimation.lottie->attach(_widget.get());
+	}
+
+	inner()->hide();
+	if (_scroll) {
+		_scroll->hide();
+	}
+	_showAnimation.start(
+		[=] { showAnimationCallback(); },
+		0.,
+		1.,
+		st::coverDuration);
+	showAnimationCallback();
+}
+
+void Step::showAnimationCallback() {
+	const auto dt = _showAnimation.value(1.);
+	const auto coverShown = (_type == Type::Intro)
+		? anim::easeOutCirc(1., dt)
+		: (1. - anim::linear(1., dt));
+	_coverShown = coverShown;
+	if (_coverAnimation.lottie) {
+		const auto shown = (1. - coverShown);
+		const auto height = shown * _coverAnimation.lottieHeight;
+		_coverAnimation.lottie->setOpacity(shown);
+		_coverAnimation.lottie->setGeometry(lottieGeometry(
+			_coverAnimation.lottieTop + coverShown * st::coverHeight,
+			height));
+	}
+	_widget->update();
 }
 
 void Step::setFocus() {
@@ -335,17 +511,38 @@ void Step::ensureVisible(int top, int height) {
 	_scroll->scrollToY(top, top + height);
 }
 
-not_null<Ui::LottieAnimation*> Step::loadLottieAnimation(
-		const QString &path) {
+void Step::showLottie(const QString &path, int top, int height) {
+	const auto lottieWidth = 2 * st::randomLottieHeight;
 	const auto content = [&] {
 		auto file = QFile(path);
 		return file.open(QIODevice::ReadOnly)
 			? file.readAll()
 			: QByteArray();
 	}();
-	return _widget->lifetime().make_state<Ui::LottieAnimation>(
+	_lottie = std::make_unique<Ui::LottieAnimation>(
 		inner(),
 		content);
+	_lottieTop = top;
+	_lottieHeight = height;
+
+	inner()->sizeValue(
+	) | rpl::filter([=] {
+		return (_lottie->parent() == inner());
+	}) | rpl::start_with_next([=](QSize size) {
+		_lottie->setGeometry(lottieGeometry(
+			contentTop() + _lottieTop,
+			_lottieHeight));
+	}, inner()->lifetime());
+}
+
+QRect Step::lottieGeometry(int top, int height) const {
+	const auto width = 2 * height;
+	return {
+		(inner()->width() - width) / 2,
+		top,
+		width,
+		height
+	};
 }
 
 } // namespace Keygen::Steps

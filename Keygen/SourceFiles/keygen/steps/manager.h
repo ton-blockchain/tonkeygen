@@ -66,10 +66,13 @@ private:
 		FnMut<void()> next = nullptr,
 		FnMut<void()> back = nullptr);
 	void confirmNewKey();
+	void initButtons();
+	void moveNextButton();
 
 	const std::unique_ptr<Ui::RpWidget> _content;
 	const base::unique_qptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
 	const base::unique_qptr<Ui::FadeWrap<Ui::IconButton>> _backButton;
+	Ui::Animations::Simple _nextButtonShown;
 	NextButtonState _lastNextState;
 	Ui::LayerManager _layerManager;
 

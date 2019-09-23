@@ -22,6 +22,10 @@ public:
 	void setGeometry(QRect geometry);
 	void setOpacity(float64 opacity);
 
+	void detach();
+	void attach(not_null<QWidget*> parent);
+	[[nodiscard]] not_null<QWidget*> parent() const;
+
 private:
 	const std::unique_ptr<RpWidget> _widget;
 	const std::unique_ptr<Lottie::SinglePlayer> _lottie;

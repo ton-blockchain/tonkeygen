@@ -10,6 +10,7 @@
 #include "ui/rp_widget.h"
 #include "ui/widgets/labels.h"
 #include "ui/text/text_utilities.h"
+#include "ui/wrap/fade_wrap.h"
 #include "ui/lottie_widget.h"
 #include "styles/style_keygen.h"
 
@@ -40,20 +41,31 @@ QString RandomSeed::accumulated() const {
 void RandomSeed::initControls() {
 	using namespace rpl::mappers;
 
-	const auto lottie = loadLottieAnimation(":/gui/art/lottie/keyboard.tgs");
+	showLottie(
+		":/gui/art/lottie/keyboard.tgs",
+		st::randomLottieTop,
+		st::randomLottieHeight);
 
 	auto countText = _length.value() | rpl::map([](int value) {
 		return QString::number(value);
 	});
-	const auto counter = Ui::CreateChild<Ui::FlatLabel>(
+	const auto counter = Ui::CreateChild<Ui::FadeWrapScaled<Ui::FlatLabel>>(
 		inner().get(),
-		std::move(countText),
-		st::randomCounter);
-	const auto counterLabel = Ui::CreateChild<Ui::FlatLabel>(
+		object_ptr<Ui::FlatLabel>(
+			inner().get(),
+			std::move(countText),
+			st::randomCounter))->setDuration(
+				st::coverDuration
+			)->show(anim::type::instant);
+	const auto counterLabel = Ui::CreateChild<Ui::FadeWrap<Ui::FlatLabel>>(
 		inner().get(),
-		tr::lng_random_seed_amount(),
-		st::randomCounterLabel);
-	auto readyTotalText = rpl::combine(
+		object_ptr<Ui::FlatLabel>(
+			inner().get(),
+			tr::lng_random_seed_amount(),
+			st::randomCounterLabel))->setDuration(
+				st::coverDuration
+			)->show(anim::type::instant);
+	auto totalText = rpl::combine(
 		tr::lng_random_seed_ready_total(),
 		_length.value(),
 		_limit.value()
@@ -66,27 +78,23 @@ void RandomSeed::initControls() {
 			QString::number(total)
 		);
 	});
-	const auto readyTotalLabel = Ui::CreateChild<Ui::FlatLabel>(
+	const auto totalLabel = Ui::CreateChild<Ui::FadeWrap<Ui::FlatLabel>>(
 		inner().get(),
-		std::move(readyTotalText),
-		st::randomCounterLabel);
-	readyTotalLabel->hide();
+		object_ptr<Ui::FlatLabel>(
+			inner().get(),
+			std::move(totalText),
+			st::randomCounterLabel))->setDuration(
+				st::coverDuration
+			)->hide(anim::type::instant);
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		const auto lottieWidth = 2 * st::randomLottieHeight;
-		lottie->setGeometry({
-			(size.width() - lottieWidth) / 2,
-			st::randomLottieTop,
-			lottieWidth,
-			st::randomLottieHeight
-		});
 		counter->resizeToWidth(size.width());
 		counter->move(0, contentTop() + st::randomCounterTop);
 		counterLabel->resizeToWidth(size.width());
 		counterLabel->move(0, contentTop() + st::randomCounterLabelTop);
-		readyTotalLabel->resizeToWidth(size.width());
-		readyTotalLabel->move(
+		totalLabel->resizeToWidth(size.width());
+		totalLabel->move(
 			0,
 			contentTop() + st::randomReadyTotalLabelTop);
 	}, counter->lifetime());
@@ -96,9 +104,9 @@ void RandomSeed::initControls() {
 		inner()->heightValue(),
 		_2
 	) | rpl::start_with_next([=](int height) {
-		counter->hide();
-		counterLabel->hide();
-		readyTotalLabel->show();
+		counter->hide(anim::type::normal);
+		counterLabel->hide(anim::type::normal);
+		totalLabel->show(anim::type::normal);
 		auto state = NextButtonState();
 		state.text = tr::lng_random_seed_next(tr::now);
 		requestNextButton(state);
@@ -108,11 +116,11 @@ void RandomSeed::initControls() {
 	) | rpl::filter([](not_null<QEvent*> e) {
 		return e->type() == QEvent::KeyPress;
 	}) | rpl::map([](not_null<QEvent*> e) {
-		return static_cast<QKeyEvent*>(e.get())->text();
-	}) | rpl::filter([](const QString &text) {
-		return !text.isEmpty();
-	}) | rpl::start_with_next([=](const QString &text) {
-		append(text);
+		return static_cast<QKeyEvent*>(e.get());
+	}) | rpl::filter([](not_null<QKeyEvent*> e) {
+		return (e->key() != Qt::Key_Escape) && !e->text().isEmpty();
+	}) | rpl::start_with_next([=](not_null<QKeyEvent*> e) {
+		append(e->text());
 	}, inner()->lifetime());
 }
 

@@ -47,9 +47,25 @@ Manager::Manager(Fn<bool(QString)> isGoodWord)
 	object_ptr<Ui::IconButton>(_content.get(), st::topBackButton))
 , _layerManager(_content.get())
 , _isGoodWord(std::move(isGoodWord)) {
+	initButtons();
+}
+
+void Manager::initButtons() {
 	_nextButton->entity()->setClickedCallback([=] { next(); });
+	_nextButton->setDuration(st::coverDuration);
+	_nextButton->toggledValue(
+	) | rpl::start_with_next([=](bool toggled) {
+		_nextButtonShown.start(
+			[=] { moveNextButton(); },
+			toggled ? 0. : 1.,
+			toggled ? 1. : 0.,
+			st::coverDuration);
+	}, _nextButton->lifetime());
+	_nextButtonShown.stop();
+
 	_backButton->entity()->setClickedCallback([=] { back(); });
 	_backButton->toggle(false, anim::type::instant);
+	_backButton->setDuration(st::coverDuration);
 	_backButton->move(0, 0);
 }
 
@@ -223,7 +239,7 @@ void Manager::showStep(
 		FnMut<void()> back) {
 	_layerManager.hideAll();
 
-	_step = std::move(step);
+	std::swap(_step, step);
 	_next = std::move(next);
 	_back = std::move(back);
 
@@ -241,10 +257,14 @@ void Manager::showStep(
 	}) | rpl::map([](const NextButtonState &state) {
 		return state.text;
 	}));
-	_nextButton->toggleOn(_step->nextButtonState(
-	) | rpl::map([](const NextButtonState &state) {
-		return !state.text.isEmpty();
-	}));
+	_step->nextButtonState(
+	) | rpl::start_with_next([=](const NextButtonState &state) {
+		_nextButton->toggle(!state.text.isEmpty(), anim::type::normal);
+	}, _step->lifetime());
+	if (!step) {
+		_nextButton->finishAnimating();
+		_nextButtonShown.stop();
+	}
 	_backButton->toggle(_back != nullptr, anim::type::normal);
 	_nextButton->raise();
 	_backButton->raise();
@@ -254,21 +274,42 @@ void Manager::showStep(
 		_step->nextButtonState(),
 		_content->widthValue()
 	) | rpl::start_with_next([=](NextButtonState state, int width) {
-		_nextButton->resizeToWidth(state.width
-			? state.width
-			: st::nextButton.width);
-		_nextButton->move(
-			(width - _nextButton->width()) / 2,
-			state.top);
-		_lastNextState = state;
-	}, inner->lifetime());
+		if (state.text.isEmpty()) {
+			_lastNextState.text = QString();
+		} else {
+			_nextButton->resizeToWidth(state.width
+				? state.width
+				: st::nextButton.width);
+			_lastNextState = state;
+		}
+		moveNextButton();
+	}, _step->lifetime());
 
 	_step->nextClicks(
 	) | rpl::start_with_next([=] {
 		this->next();
-	}, inner->lifetime());
+	}, _step->lifetime());
 
-	_step->setFocus();
+	_step->coverShown(
+	) | rpl::start_with_next([=](float64 shown) {
+		_backButton->move(0, st::coverHeight * shown);
+	}, _step->lifetime());
+
+	if (step) {
+		_step->showAnimated(step.get());
+	} else {
+		_step->setFocus();
+	}
+}
+
+void Manager::moveNextButton() {
+	const auto shown = _nextButton->toggled();
+	const auto progress = _nextButtonShown.value(shown ? 1. : 0.);
+	const auto shownTop = _lastNextState.top;
+	const auto hiddenTop = shownTop + 2 * st::nextButton.height;
+	_nextButton->move(
+		(_content->width() - _nextButton->width()) / 2,
+		anim::interpolate(hiddenTop, shownTop, progress));
 }
 
 void Manager::confirmNewKey() {

@@ -21,18 +21,13 @@ Created::Created() : Step(Type::Default) {
 }
 
 void Created::initControls() {
-	const auto lottie = loadLottieAnimation(":/gui/art/lottie/paper.tgs");
+	showLottie(
+		":/gui/art/lottie/paper.tgs",
+		st::createdLottieTop,
+		st::createdLottieHeight);
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
-		const auto lottieWidth = 2 * st::createdLottieHeight;
-		lottie->setGeometry({
-			(size.width() - lottieWidth) / 2,
-			contentTop() + st::createdLottieTop,
-			lottieWidth,
-			st::createdLottieHeight
-		});
-
 		auto state = NextButtonState();
 		state.text = tr::lng_created_next(tr::now);
 		requestNextButton(state);

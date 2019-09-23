@@ -55,11 +55,25 @@ LottieAnimation::~LottieAnimation() = default;
 
 void LottieAnimation::setGeometry(QRect geometry) {
 	_widget->setGeometry(geometry);
+	_widget->update();
 }
 
 void LottieAnimation::setOpacity(float64 opacity) {
 	_opacity = opacity;
 	_widget->update();
+}
+
+not_null<QWidget*> LottieAnimation::parent() const {
+	return _widget->parentWidget();
+}
+
+void LottieAnimation::detach() {
+	_widget->setParent(nullptr);
+}
+
+void LottieAnimation::attach(not_null<QWidget*> parent) {
+	_widget->setParent(parent);
+	_widget->show();
 }
 
 } // namespace Ui

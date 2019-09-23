@@ -38,8 +38,7 @@ coverIconsMinSkip: 120px;
 coverLeft: icon {{ "intro_left", introCoverIconsFg }};
 coverRight: icon {{ "intro_right", introCoverIconsFg }};
 coverIcon: icon {{ "intro_gem", windowBg }};
-coverIconLeft: 0px;
-coverIconTop: 46px;
+coverIconTop: 49px;
 coverDuration: 200;
 
 doneMenuTogglePosition: point(8px, 16px);
