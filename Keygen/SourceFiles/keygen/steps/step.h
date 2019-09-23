@@ -7,11 +7,13 @@
 #pragma once
 
 #include "base/unique_qptr.h"
+#include "ui/effects/animations.h"
 
 struct TextWithEntities;
 
 namespace Ui {
 class LottieAnimation;
+class CrossFadeAnimation;
 class RpWidget;
 class FlatLabel;
 class ScrollArea;
@@ -45,11 +47,25 @@ public:
 	[[nodiscard]] rpl::producer<NextButtonState> nextButtonState() const;
 	[[nodiscard]] rpl::producer<> nextClicks() const;
 
+	void showAnimated();
 	virtual void setFocus();
 
 	rpl::lifetime &lifetime();
 
 protected:
+	[[nodiscard]] Ui::ScrollArea *resolveScrollArea();
+	[[nodiscard]] not_null<Ui::RpWidget*> resolveInner();
+	[[nodiscard]] auto resolveNextButton()
+		-> std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>>;
+	void initScroll();
+	void initNextButton();
+	void initCover();
+
+	void prepareCoverMask();
+	void paintContent(QRect clip);
+	void paintCover(QPainter &p, int top, QRect clip);
+	void showFinished();
+
 	[[nodiscard]] not_null<Ui::RpWidget*> inner() const;
 	[[nodiscard]] int contentTop() const;
 
@@ -61,6 +77,16 @@ protected:
 		const QString &path);
 
 private:
+	struct CoverAnimation {
+		CoverAnimation() = default;
+		CoverAnimation(CoverAnimation &&other) = default;
+		CoverAnimation &operator=(CoverAnimation &&other) = default;
+		~CoverAnimation();
+
+		std::unique_ptr<Ui::CrossFadeAnimation> title;
+		std::unique_ptr<Ui::CrossFadeAnimation> description;
+	};
+
 	const Type _type = Type();
 	const std::unique_ptr<Ui::RpWidget> _widget;
 	Ui::ScrollArea * const _scroll = nullptr;
@@ -68,6 +94,11 @@ private:
 
 	base::unique_qptr<Ui::FlatLabel> _title;
 	base::unique_qptr<Ui::FlatLabel> _description;
+
+	Ui::Animations::Simple _a_show;
+	CoverAnimation _coverAnimation;
+	//std::unique_ptr<Ui::SlideAnimation> _slideAnimation;
+	QPixmap _coverMask;
 
 	const std::unique_ptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
 	NextButtonState _lastNextState;

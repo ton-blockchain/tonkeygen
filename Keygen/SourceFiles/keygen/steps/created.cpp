@@ -28,7 +28,7 @@ void Created::initControls() {
 		const auto lottieWidth = 2 * st::createdLottieHeight;
 		lottie->setGeometry({
 			(size.width() - lottieWidth) / 2,
-			st::createdLottieTop,
+			contentTop() + st::createdLottieTop,
 			lottieWidth,
 			st::createdLottieHeight
 		});

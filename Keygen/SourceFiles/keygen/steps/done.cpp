@@ -23,7 +23,9 @@ namespace Keygen::Steps {
 Done::Done(const QString &publicKey)
 : Step(Type::Default) {
 	setTitle(tr::lng_done_title(Ui::Text::RichLangValue), st::doneTitleTop);
-	setDescription(tr::lng_done_description(Ui::Text::RichLangValue), st::doneDescriptionTop);
+	setDescription(
+		tr::lng_done_description(Ui::Text::RichLangValue),
+		st::doneDescriptionTop);
 	initControls(publicKey);
 	initShortcuts();
 }

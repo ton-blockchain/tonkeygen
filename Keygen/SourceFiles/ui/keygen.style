@@ -8,7 +8,7 @@ using "ui/basic.style";
 using "ui/widgets/widgets.style";
 
 windowSize: size(640px, 480px);
-windowSizeMin: size(480px, 400px);
+windowSizeMin: size(480px, 480px);
 messageBoxWidth: 320px;
 
 scrollArea: ScrollArea(defaultScrollArea) {
@@ -32,6 +32,16 @@ topBackButton: IconButton(backButton) {
 	rippleAreaPosition: point(8px, 8px);
 }
 
+coverHeight: 208px;
+coverMaxWidth: 880px;
+coverIconsMinSkip: 120px;
+coverLeft: icon {{ "intro_left", introCoverIconsFg }};
+coverRight: icon {{ "intro_right", introCoverIconsFg }};
+coverIcon: icon {{ "intro_gem", windowBg }};
+coverIconLeft: 0px;
+coverIconTop: 46px;
+coverDuration: 200;
+
 doneMenuTogglePosition: point(8px, 16px);
 doneMenuPosition: point(2px, 40px);
 
@@ -51,7 +61,8 @@ introTitle: FlatLabel(boldCenteredLabel) {
 		linkFontOver: font(22px bold underline);
 	}
 }
-introTitleTop: 136px;
+introTitleTop: 168px;
+introTitleTopMin: 256px;
 introDescription: FlatLabel(grayCenteredLabel) {
 	style: TextStyle(defaultTextStyle) {
 		font: font(15px);
@@ -60,7 +71,7 @@ introDescription: FlatLabel(grayCenteredLabel) {
 		lineHeight: 24px;
 	}
 }
-introDescriptionTop: 175px;
+introDescriptionTop: 39px;
 introNextWidth: 194px;
 stepTitle: FlatLabel(boldCenteredLabel) {
 	style: TextStyle(defaultTextStyle) {
@@ -79,10 +90,10 @@ stepDescription: FlatLabel(grayCenteredLabel) {
 		lineHeight: 20px;
 	}
 }
-stepDescriptionTop: 158px;
+stepDescriptionTop: 40px;
 stepHeight: 400px;
 scrollTitleTop: 71px;
-scrollDescriptionTop: 111px;
+scrollDescriptionTop: 40px;
 
 randomCounterFontSize: 48px;
 randomCounter: FlatLabel(boldCenteredLabel) {
@@ -96,10 +107,10 @@ randomCounterTop: 288px;
 randomCounterLabel: stepDescription;
 randomCounterLabelTop: 357px;
 randomReadyTotalLabelTop: 292px;
-randomLottieTop: 40px;
+randomLottieTop: 20px;
 randomLottieHeight: 112px;
 
-createdLottieTop: 20px;
+createdLottieTop: 0px;
 createdLottieHeight: 112px;
 
 wordsTop: 225px;
@@ -129,7 +140,7 @@ checkInputField: InputField(defaultInputField) {
 checkInputSkip: 8px;
 
 doneTitleTop: 30px;
-doneDescriptionTop: 70px;
+doneDescriptionTop: 40px;
 doneKeyLabel: FlatLabel(defaultFlatLabel) {
 	style: TextStyle(defaultTextStyle) {
 		font: font(15px);
