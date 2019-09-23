@@ -11,6 +11,7 @@
 #include "ui/text/text_utilities.h"
 #include "ui/rp_widget.h"
 #include "ui/message_box.h"
+#include "core/sandbox.h"
 #include "ton/ton_utility.h"
 #include "base/platform/base_platform_info.h"
 #include "base/call_delayed.h"
@@ -255,11 +256,16 @@ void Application::savePublicKeyNow(const QByteArray &key) {
 	const auto done = crl::guard(_steps->content(), [=](QString path) {
 		_steps->showSaveKeyDone(path);
 	});
-	const auto path = QFileDialog::getSaveFileName(
-		_steps->content()->window(),
-		tr::lng_done_save_caption(tr::now),
-		"public_key.txt",
-		filter);
+	const auto getPath = [&] {
+		return QFileDialog::getSaveFileName(
+			_steps->content()->window(),
+			tr::lng_done_save_caption(tr::now),
+			"public_key.txt",
+			filter);
+	};
+	const auto path = Core::Sandbox::Instance().runNestedEventLoop(
+		_steps->content(),
+		getPath);
 	if (path.isEmpty()) {
 		return;
 	}

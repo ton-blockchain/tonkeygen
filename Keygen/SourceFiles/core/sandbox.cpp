@@ -74,6 +74,25 @@ void Sandbox::checkLocalTime() {
 	}
 }
 
+auto Sandbox::createNestedEventLoopState(not_null<QObject*> guard)
+-> std::shared_ptr<NestedEventLoopState> {
+	auto state = std::make_shared<NestedEventLoopState>();
+	const auto waslevel = _loopNestingLevel;
+	state->checkEntered = [=] {
+		if (state->finished) {
+			return;
+		}
+		if (_loopNestingLevel > waslevel) {
+			state->checkEntered = nullptr;
+			processPostponedCalls(waslevel);
+		} else {
+			InvokeQueued(guard, state->checkEntered);
+		}
+	};
+	InvokeQueued(guard, state->checkEntered);
+	return state;
+}
+
 bool Sandbox::event(QEvent *event) {
 	if (event->type() == QEvent::Close) {
 		quit();
@@ -211,8 +230,7 @@ bool Sandbox::notify(QObject *receiver, QEvent *e) {
 	if (QThread::currentThreadId() != _mainThreadId) {
 		return notifyOrInvoke(receiver, e);
 	}
-
-	const auto wrap = createEventNestingLevel();
+	const auto wrap = createEventNestingLevelWrap();
 	if (e->type() == QEvent::UpdateRequest) {
 		const auto weak = QPointer<QObject>(receiver);
 		_widgetUpdateRequests.fire({});

@@ -29,7 +29,7 @@ class Launcher;
 class Sandbox final
 	: public QApplication
 	, private QAbstractNativeEventFilter {
-	auto createEventNestingLevel() {
+	auto createEventNestingLevelWrap() {
 		incrementEventNestingLevel();
 		return gsl::finally([=] { decrementEventNestingLevel(); });
 	}
@@ -50,7 +50,13 @@ public:
 	template <typename Callable>
 	auto customEnterFromEventLoop(Callable &&callable) {
 		registerEnterFromEventLoop();
-		const auto wrap = createEventNestingLevel();
+		const auto wrap = createEventNestingLevelWrap();
+		return callable();
+	}
+	template <typename Callable>
+	auto runNestedEventLoop(not_null<QObject*> guard, Callable &&callable) {
+		const auto state = createNestedEventLoopState(guard);
+		const auto finish = gsl::finally([&] { state->finished = true; });
 		return callable();
 	}
 
@@ -84,6 +90,14 @@ private:
 		int loopNestingLevel = 0;
 		FnMut<void()> callable;
 	};
+	struct NestedEventLoopState {
+		bool finished = false;
+		Fn<void()> checkEntered;
+
+		~NestedEventLoopState() {
+			Expects(finished);
+		}
+	};
 
 	bool notifyOrInvoke(QObject *receiver, QEvent *e);
 	void registerEnterFromEventLoop();
@@ -97,6 +111,8 @@ private:
 	void launchApplication();
 	void setupScreenScale();
 	void checkLocalTime();
+	std::shared_ptr<NestedEventLoopState> createNestedEventLoopState(
+		not_null<QObject*> guard);
 
 	void setScale(int scale);
 	void stateChanged(Qt::ApplicationState state);
