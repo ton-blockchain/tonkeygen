@@ -254,6 +254,9 @@ void Manager::showStep(
 		_step->nextButtonState(),
 		_content->widthValue()
 	) | rpl::start_with_next([=](NextButtonState state, int width) {
+		_nextButton->resizeToWidth(state.width
+			? state.width
+			: st::nextButton.width);
 		_nextButton->move(
 			(width - _nextButton->width()) / 2,
 			state.top);

@@ -25,6 +25,7 @@ namespace Keygen::Steps {
 struct NextButtonState {
 	QString text;
 	int top = 0;
+	int width = 0;
 };
 
 class Step {

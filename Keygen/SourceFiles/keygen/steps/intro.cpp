@@ -24,6 +24,7 @@ void Intro::initControls() {
 	) | rpl::start_with_next([=](QSize size) {
 		auto state = NextButtonState();
 		state.text = tr::lng_intro_next(tr::now);
+		state.width = st::introNextWidth;
 		requestNextButton(state);
 	}, inner()->lifetime());
 }

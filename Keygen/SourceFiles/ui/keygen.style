@@ -19,13 +19,13 @@ scrollArea: ScrollArea(defaultScrollArea) {
 }
 
 nextButton: RoundButton(defaultActiveButton) {
-	width: 300px;
+	width: 264px;
 	height: 56px;
 
 	textTop: 17px;
 	font: font(17px semibold);
 }
-nextButtonAreaHeight: 66px;
+nextButtonAreaHeight: 62px;
 topBackButton: IconButton(backButton) {
 	width: 56px;
 	height: 56px;
@@ -46,9 +46,9 @@ grayCenteredLabel: FlatLabel(centeredLabel) {
 }
 introTitle: FlatLabel(boldCenteredLabel) {
 	style: TextStyle(defaultTextStyle) {
-		font: font(22px semibold);
-		linkFont: font(22px semibold);
-		linkFontOver: font(22px semibold underline);
+		font: font(22px bold);
+		linkFont: font(22px bold);
+		linkFontOver: font(22px bold underline);
 	}
 }
 introTitleTop: 136px;
@@ -60,27 +60,31 @@ introDescription: FlatLabel(grayCenteredLabel) {
 		lineHeight: 24px;
 	}
 }
-introDescriptionTop: 174px;
+introDescriptionTop: 175px;
+introNextWidth: 194px;
 stepTitle: FlatLabel(boldCenteredLabel) {
 	style: TextStyle(defaultTextStyle) {
-		font: font(17px semibold);
-		linkFont: font(17px semibold);
-		linkFontOver: font(17px semibold underline);
+		font: font(19px semibold);
+		linkFont: font(19px semibold);
+		linkFontOver: font(19px semibold underline);
 	}
 }
-stepTitleTop: 116px;
+stepTitleTop: 118px;
 stepDescription: FlatLabel(grayCenteredLabel) {
 	minWidth: 440px;
 	style: TextStyle(defaultTextStyle) {
+		font: font(14px);
+		linkFont: font(14px);
+		linkFontOver: font(14px underline);
 		lineHeight: 20px;
 	}
 }
-stepDescriptionTop: 156px;
+stepDescriptionTop: 158px;
 stepHeight: 400px;
-scrollTitleTop: 74px;
-scrollDescriptionTop: 114px;
+scrollTitleTop: 71px;
+scrollDescriptionTop: 111px;
 
-randomCounterFontSize: 44px;
+randomCounterFontSize: 48px;
 randomCounter: FlatLabel(boldCenteredLabel) {
 	style: TextStyle(defaultTextStyle) {
 		font: font(randomCounterFontSize semibold);
@@ -88,17 +92,17 @@ randomCounter: FlatLabel(boldCenteredLabel) {
 		linkFontOver: font(randomCounterFontSize semibold underline);
 	}
 }
-randomCounterTop: 296px;
+randomCounterTop: 288px;
 randomCounterLabel: stepDescription;
-randomCounterLabelTop: 352px;
-randomReadyTotalLabelTop: 284px;
-randomLottieTop: 60px;
-randomLottieHeight: 76px;
+randomCounterLabelTop: 357px;
+randomReadyTotalLabelTop: 292px;
+randomLottieTop: 40px;
+randomLottieHeight: 112px;
 
-createdLottieTop: 60px;
-createdLottieHeight: 76px;
+createdLottieTop: 20px;
+createdLottieHeight: 112px;
 
-wordsTop: 227px;
+wordsTop: 225px;
 wordIndexLabel: FlatLabel(defaultFlatLabel) {
 	textFg: introDescriptionFg;
 }
@@ -110,12 +114,13 @@ wordLabel: FlatLabel(defaultFlatLabel) {
 	}
 }
 wordIndexSkip: 8px;
-wordSkipLeft: 120px;
-wordSkipRight: 60px;
+wordSkipLeft: 117px;
+wordSkipRight: 69px;
 wordHeight: 32px;
-wordsNextSkip: 52px;
-wordsNextBottomSkip: 108px;
+wordsNextSkip: 40px;
+wordsNextBottomSkip: 110px;
 
+checksTop: 198px;
 checkInputField: InputField(defaultInputField) {
 	textMargins: margins(0px, 6px, 0px, 4px);
 	width: 112px;
@@ -127,15 +132,15 @@ doneTitleTop: 30px;
 doneDescriptionTop: 70px;
 doneKeyLabel: FlatLabel(defaultFlatLabel) {
 	style: TextStyle(defaultTextStyle) {
-		font: font(14px);
-		linkFont: font(14px);
-		linkFontOver: font(14px underline);
+		font: font(15px);
+		linkFont: font(15px);
+		linkFontOver: font(15px underline);
 		lineHeight: 26px;
 	}
 	align: align(center);
 	minWidth: 50px;
-	margin: margins(28px, 16px, 28px, 16px);
+	margin: margins(27px, 14px, 27px, 10px);
 }
 doneKeyTop: 144px;
-doneCopyTop: 290px;
-doneSaveTop: 344px;
+doneCopyTop: 294px;
+doneSaveTop: 346px;

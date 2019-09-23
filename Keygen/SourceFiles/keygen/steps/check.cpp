@@ -119,7 +119,7 @@ void Check::initControls(
 		Fn<bool(QString)> isGoodWord,
 		const std::vector<QString> &values) {
 	auto labels = std::make_shared<std::vector<Word>>();
-	const auto wordsTop = st::wordsTop;
+	const auto wordsTop = st::checksTop;
 	const auto rows = 12;
 	const auto count = rows * 2;
 	const auto rowsBottom = wordsTop + rows * st::wordHeight;
