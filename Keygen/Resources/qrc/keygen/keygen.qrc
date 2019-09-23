@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/gui">
+    <file alias="art/lottie/keyboard.tgs">../../art/lottie/keyboard.tgs</file>
+    <file alias="art/lottie/paper.tgs">../../art/lottie/paper.tgs</file>
+  </qresource>
+</RCC>

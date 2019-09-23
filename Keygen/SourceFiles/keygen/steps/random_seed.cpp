@@ -10,6 +10,7 @@
 #include "ui/rp_widget.h"
 #include "ui/widgets/labels.h"
 #include "ui/text/text_utilities.h"
+#include "ui/lottie_widget.h"
 #include "styles/style_keygen.h"
 
 #include <QtGui/QtEvents>
@@ -38,6 +39,8 @@ QString RandomSeed::accumulated() const {
 
 void RandomSeed::initControls() {
 	using namespace rpl::mappers;
+
+	const auto lottie = loadLottieAnimation(":/gui/art/lottie/keyboard.tgs");
 
 	auto countText = _length.value() | rpl::map([](int value) {
 		return QString::number(value);
@@ -71,6 +74,13 @@ void RandomSeed::initControls() {
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
+		const auto lottieWidth = 2 * st::randomLottieHeight;
+		lottie->setGeometry({
+			(size.width() - lottieWidth) / 2,
+			st::randomLottieTop,
+			lottieWidth,
+			st::randomLottieHeight
+		});
 		counter->resizeToWidth(size.width());
 		counter->move(0, contentTop() + st::randomCounterTop);
 		counterLabel->resizeToWidth(size.width());

@@ -34,7 +34,7 @@
       'helpers/modules/openssl.gypi',
       'helpers/modules/qt.gypi',
       'helpers/modules/pch.gypi',
-      #'keygen/qrc.gypi',
+      'keygen/qrc.gypi',
       'keygen/win.gypi',
       'keygen/mac.gypi',
       'keygen/linux.gypi',
@@ -47,6 +47,7 @@
       '<(submodules_loc)/lib_base/lib_base.gyp:lib_base',
       '<(submodules_loc)/lib_ui/lib_ui.gyp:lib_ui',
       '<(submodules_loc)/lib_ton/lib_ton.gyp:lib_ton',
+      '<(submodules_loc)/lib_lottie/lib_lottie.gyp:lib_lottie',
     ],
 
     'defines': [

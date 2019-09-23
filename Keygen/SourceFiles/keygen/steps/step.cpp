@@ -12,6 +12,7 @@
 #include "ui/widgets/buttons.h"
 #include "ui/wrap/fade_wrap.h"
 #include "ui/text/text_utilities.h"
+#include "ui/lottie_widget.h"
 #include "styles/style_keygen.h"
 
 namespace Keygen::Steps {
@@ -164,6 +165,19 @@ void Step::ensureVisible(int top, int height) {
 	Expects(_scroll != nullptr);
 
 	_scroll->scrollToY(top, top + height);
+}
+
+not_null<Ui::LottieAnimation*> Step::loadLottieAnimation(
+		const QString &path) {
+	const auto content = [&] {
+		auto file = QFile(path);
+		return file.open(QIODevice::ReadOnly)
+			? file.readAll()
+			: QByteArray();
+	}();
+	return _widget->lifetime().make_state<Ui::LottieAnimation>(
+		inner(),
+		content);
 }
 
 } // namespace Keygen::Steps

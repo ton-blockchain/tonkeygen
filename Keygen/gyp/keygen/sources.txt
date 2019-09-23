@@ -27,6 +27,8 @@
 <(src_loc)/keygen/steps/view.cpp
 <(src_loc)/keygen/steps/view.h
 <(src_loc)/keygen/tr.h
+<(src_loc)/ui/lottie_widget.cpp
+<(src_loc)/ui/lottie_widget.h
 <(src_loc)/ui/message_box.cpp
 <(src_loc)/ui/message_box.h
 <(src_loc)/ui/public_key_label.cpp

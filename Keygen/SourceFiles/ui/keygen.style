@@ -92,6 +92,11 @@ randomCounterTop: 296px;
 randomCounterLabel: stepDescription;
 randomCounterLabelTop: 352px;
 randomReadyTotalLabelTop: 284px;
+randomLottieTop: 60px;
+randomLottieHeight: 76px;
+
+createdLottieTop: 60px;
+createdLottieHeight: 76px;
 
 wordsTop: 227px;
 wordIndexLabel: FlatLabel(defaultFlatLabel) {

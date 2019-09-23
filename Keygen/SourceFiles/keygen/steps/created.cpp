@@ -9,6 +9,7 @@
 #include "keygen/phrases.h"
 #include "ui/rp_widget.h"
 #include "ui/text/text_utilities.h"
+#include "ui/lottie_widget.h"
 #include "styles/style_keygen.h"
 
 namespace Keygen::Steps {
@@ -20,8 +21,18 @@ Created::Created() : Step(Type::Default) {
 }
 
 void Created::initControls() {
+	const auto lottie = loadLottieAnimation(":/gui/art/lottie/paper.tgs");
+
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
+		const auto lottieWidth = 2 * st::createdLottieHeight;
+		lottie->setGeometry({
+			(size.width() - lottieWidth) / 2,
+			st::createdLottieTop,
+			lottieWidth,
+			st::createdLottieHeight
+		});
+
 		auto state = NextButtonState();
 		state.text = tr::lng_created_next(tr::now);
 		requestNextButton(state);

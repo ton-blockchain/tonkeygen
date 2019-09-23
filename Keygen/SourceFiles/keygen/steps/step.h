@@ -11,6 +11,7 @@
 struct TextWithEntities;
 
 namespace Ui {
+class LottieAnimation;
 class RpWidget;
 class FlatLabel;
 class ScrollArea;
@@ -55,6 +56,8 @@ protected:
 	void setDescription(rpl::producer<TextWithEntities> text, int top = 0);
 	void requestNextButton(NextButtonState state);
 	void ensureVisible(int top, int height);
+	[[nodiscard]] not_null<Ui::LottieAnimation*> loadLottieAnimation(
+		const QString &path);
 
 private:
 	const Type _type = Type();
