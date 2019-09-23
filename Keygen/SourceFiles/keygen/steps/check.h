@@ -12,7 +12,7 @@ namespace Keygen::Steps {
 
 class Check final : public Step {
 public:
-	explicit Check(const std::vector<QString> &values);
+	Check(Fn<bool(QString)> isGoodWord, const std::vector<QString> &values);
 
 	int desiredHeight() const override;
 
@@ -23,7 +23,9 @@ public:
 	bool checkAll();
 
 private:
-	void initControls(const std::vector<QString> &values);
+	void initControls(
+		Fn<bool(QString)> isGoodWord,
+		const std::vector<QString> &values);
 
 	int _desiredHeight = 0;
 	Fn<std::vector<QString>()> _words;

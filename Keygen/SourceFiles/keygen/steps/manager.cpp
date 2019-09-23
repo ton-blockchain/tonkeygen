@@ -32,7 +32,7 @@ constexpr auto kSaveKeyDoneDuration = crl::time(500);
 
 } // namespace
 
-Manager::Manager()
+Manager::Manager(Fn<bool(QString)> isGoodWord)
 : _content(std::make_unique<Ui::RpWidget>())
 , _nextButton(
 	std::in_place,
@@ -45,7 +45,8 @@ Manager::Manager()
 	std::in_place,
 	_content.get(),
 	object_ptr<Ui::IconButton>(_content.get(), st::topBackButton))
-, _layerManager(_content.get()) {
+, _layerManager(_content.get())
+, _isGoodWord(std::move(isGoodWord)) {
 	_nextButton->entity()->setClickedCallback([=] { next(); });
 	_backButton->entity()->setClickedCallback([=] { back(); });
 	_backButton->toggle(false, anim::type::instant);
@@ -119,7 +120,7 @@ void Manager::showCheck() {
 	//auto check = std::make_unique<Check>(); // #TODO don't pass words
 	auto words = _tmpwords;
 	words.pop_back();
-	auto check = std::make_unique<Check>(words);
+	auto check = std::make_unique<Check>(_isGoodWord, words);
 
 	const auto raw = check.get();
 

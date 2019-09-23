@@ -37,7 +37,9 @@ namespace {
 
 Application::Application()
 : _window(std::make_unique<Ui::RpWidget>())
-, _steps(std::make_unique<Steps::Manager>())
+, _steps(std::make_unique<Steps::Manager>([&](const QString &word) {
+	return isGoodWord(word);
+}))
 , _path(QStandardPaths::writableLocation(QStandardPaths::DataLocation)) {
 	initWindow();
 	initSteps();
@@ -46,6 +48,11 @@ Application::Application()
 
 Application::~Application() {
 	Ton::Finish();
+}
+
+bool Application::isGoodWord(const QString &word) const {
+	return !word.isEmpty()
+		&& (_validWords.empty() || base::contains(_validWords, word));
 }
 
 void Application::initSteps() {
@@ -113,6 +120,7 @@ void Application::initTonLib() {
 	Ton::Start(_path, [=] {
 		_state = State::WaitingRandom;
 		checkRandomSeed();
+		getValidWords();
 	}, errorHandler());
 
 	crl::async([] {
@@ -171,6 +179,16 @@ void Application::setRandomSeed(const QByteArray &seed) {
 
 	_randomSeed = seed;
 	checkRandomSeed();
+}
+
+void Application::getValidWords() {
+	Ton::GetValidWords([=](std::vector<QByteArray> &&validWords) {
+		_validWords = ranges::view::all(
+			validWords
+		) | ranges::view::transform([](const QByteArray &value) {
+			return QString::fromUtf8(value);
+		}) | ranges::to_vector;
+	}, errorHandler());
 }
 
 void Application::checkRandomSeed() {

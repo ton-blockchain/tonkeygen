@@ -25,7 +25,7 @@ class Step;
 
 class Manager final {
 public:
-	Manager();
+	explicit Manager(Fn<bool(QString)> isGoodWord);
 	Manager(const Manager &other) = delete;
 	Manager &operator=(const Manager &other) = delete;
 	~Manager();
@@ -73,6 +73,7 @@ private:
 	NextButtonState _lastNextState;
 	Ui::LayerManager _layerManager;
 
+	const Fn<bool(QString)> _isGoodWord;
 	std::vector<QString> _tmpwords;
 
 	std::unique_ptr<Step> _step;

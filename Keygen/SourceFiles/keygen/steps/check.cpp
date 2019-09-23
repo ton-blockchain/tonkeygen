@@ -86,10 +86,13 @@ QString Word::word() const {
 
 } // namespace
 
-Check::Check(const std::vector<QString> &values) : Step(Type::Scroll) {
+Check::Check(
+	Fn<bool(QString)> isGoodWord,
+	const std::vector<QString> &values)
+: Step(Type::Scroll) {
 	setTitle(tr::lng_check_title(Ui::Text::RichLangValue));
 	setDescription(tr::lng_check_description(Ui::Text::RichLangValue));
-	initControls(values);
+	initControls(isGoodWord, values);
 }
 
 std::vector<QString> Check::words() const {
@@ -112,7 +115,9 @@ int Check::desiredHeight() const {
 	return _desiredHeight;
 }
 
-void Check::initControls(const std::vector<QString> &values) {
+void Check::initControls(
+		Fn<bool(QString)> isGoodWord,
+		const std::vector<QString> &values) {
 	auto labels = std::make_shared<std::vector<Word>>();
 	const auto wordsTop = st::wordsTop;
 	const auto rows = 12;
@@ -124,7 +129,7 @@ void Check::initControls(const std::vector<QString> &values) {
 	const auto isValid = [=](int index) {
 		Expects(index < count);
 
-		return !(*labels)[index].word().isEmpty();
+		return isGoodWord((*labels)[index].word());
 	};
 	const auto showError = [=](int index) {
 		Expects(index < count);

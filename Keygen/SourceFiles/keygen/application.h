@@ -45,12 +45,14 @@ private:
 	void handleWindowKeyPress(not_null<QKeyEvent*> e);
 	void setRandomSeed(const QByteArray &seed);
 	void checkRandomSeed();
+	void getValidWords();
 	void checkWords(std::vector<QString> &&words);
 	void copyPublicKey();
 	void savePublicKey();
 	void savePublicKeyNow(const QByteArray &key);
 	void startNewKey();
 
+	[[nodiscard]] bool isGoodWord(const QString &word) const;
 	[[nodiscard]] std::vector<QString> collectWords() const;
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
@@ -60,6 +62,7 @@ private:
 
 	State _state = State::Starting;
 	QByteArray _randomSeed;
+	std::vector<QString> _validWords;
 	std::optional<Ton::Key> _key;
 
 	rpl::lifetime _lifetime;
