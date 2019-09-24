@@ -12,7 +12,7 @@ class QEvent;
 class QKeyEvent;
 
 namespace Ui {
-class RpWidget;
+class Window;
 } // namespace Ui
 
 namespace Keygen {
@@ -56,7 +56,7 @@ private:
 	[[nodiscard]] std::vector<QString> collectWords() const;
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
-	const std::unique_ptr<Ui::RpWidget> _window;
+	const std::unique_ptr<Ui::Window> _window;
 	const std::unique_ptr<Steps::Manager> _steps;
 	const QString _path;
 

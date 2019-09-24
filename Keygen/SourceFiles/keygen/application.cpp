@@ -8,6 +8,7 @@
 
 #include "keygen/steps/manager.h"
 #include "keygen/phrases.h"
+#include "ui/widgets/window.h"
 #include "ui/text/text_utilities.h"
 #include "ui/rp_widget.h"
 #include "ui/message_box.h"
@@ -37,7 +38,7 @@ namespace {
 } // namespace
 
 Application::Application()
-: _window(std::make_unique<Ui::RpWidget>())
+: _window(std::make_unique<Ui::Window>())
 , _steps(std::make_unique<Steps::Manager>([&](const QString &word) {
 	return isGoodWord(word);
 }))
@@ -58,8 +59,8 @@ bool Application::isGoodWord(const QString &word) const {
 
 void Application::initSteps() {
 	const auto widget = _steps->content();
-	widget->setParent(_window.get());
-	_window->sizeValue(
+	widget->setParent(_window->body());
+	_window->body()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
 		widget->setGeometry({ QPoint(), size });
 	}, widget->lifetime());
@@ -98,8 +99,8 @@ void Application::run() {
 }
 
 void Application::initWindow() {
-	_window->setWindowTitle(tr::lng_window_title(tr::now));
-	_window->setMinimumSize(st::windowSizeMin);
+	_window->setTitle(tr::lng_window_title(tr::now));
+	_window->setSizeMin(st::windowSizeMin);
 	_window->setGeometry(style::centerrect(
 		QApplication::desktop()->geometry(),
 		QRect(QPoint(), st::windowSize)));

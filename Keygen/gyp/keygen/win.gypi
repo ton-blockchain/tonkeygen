@@ -9,6 +9,7 @@
     'libraries': [
       '-lzlibstat',
       '-lUxTheme',
+      '-lDwmapi',
       '-lDbgHelp',
     ],
     'msvs_settings': {
