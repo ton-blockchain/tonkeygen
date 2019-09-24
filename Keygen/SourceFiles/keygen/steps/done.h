@@ -30,6 +30,8 @@ private:
 	void initShortcuts();
 	void showMenu(not_null<Ui::IconButton*> toggle);
 
+	QImage grabForAnimation(QRect rect) const override;
+
 	rpl::event_stream<> _copyKeyRequests;
 	rpl::event_stream<> _saveKeyRequests;
 	rpl::event_stream<> _newKeyRequests;

@@ -155,4 +155,16 @@ void Done::initShortcuts() {
 	}, inner()->lifetime());
 }
 
+QImage Done::grabForAnimation(QRect rect) const {
+	const auto menuWasShown = _menu && !_menu->isHidden();
+	if (menuWasShown) {
+		_menu->QWidget::setParent(nullptr);
+	}
+	auto result = Step::grabForAnimation(rect);
+	if (menuWasShown) {
+		_menu->QWidget::setParent(inner());
+	}
+	return result;
+}
+
 } // namespace Keygen::Steps

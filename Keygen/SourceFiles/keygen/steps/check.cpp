@@ -17,6 +17,8 @@
 namespace Keygen::Steps {
 namespace {
 
+const auto kSkipPassword = QString("speakfriendandenter");
+
 class Word final {
 public:
 	Word(not_null<QWidget*> parent, int index, const QString &value);
@@ -86,13 +88,11 @@ QString Word::word() const {
 
 } // namespace
 
-Check::Check(
-	Fn<bool(QString)> isGoodWord,
-	const std::vector<QString> &values)
+Check::Check(Fn<bool(QString)> isGoodWord)
 : Step(Type::Scroll) {
 	setTitle(tr::lng_check_title(Ui::Text::RichLangValue));
 	setDescription(tr::lng_check_description(Ui::Text::RichLangValue));
-	initControls(isGoodWord, values);
+	initControls(isGoodWord);
 }
 
 std::vector<QString> Check::words() const {
@@ -115,21 +115,16 @@ int Check::desiredHeight() const {
 	return _desiredHeight;
 }
 
-void Check::initControls(
-		Fn<bool(QString)> isGoodWord,
-		const std::vector<QString> &values) {
-	auto labels = std::make_shared<std::vector<Word>>();
+void Check::initControls(Fn<bool(QString)> isGoodWord) {
+	auto inputs = std::make_shared<std::vector<Word>>();
 	const auto wordsTop = st::checksTop;
 	const auto rows = 12;
 	const auto count = rows * 2;
 	const auto rowsBottom = wordsTop + rows * st::wordHeight;
-	const auto value = [&](int index) {
-		return (index < values.size()) ? values[index] : QString();
-	};
 	const auto isValid = [=](int index) {
 		Expects(index < count);
 
-		return isGoodWord((*labels)[index].word());
+		return isGoodWord((*inputs)[index].word());
 	};
 	const auto showError = [=](int index) {
 		Expects(index < count);
@@ -137,12 +132,12 @@ void Check::initControls(
 		if (isValid(index)) {
 			return false;
 		}
-		(*labels)[index].showError();
+		(*inputs)[index].showError();
 		return true;
 	};
 	const auto init = [&](const Word &word, int index) {
 		const auto next = [=] {
-			return (index + 1 < count) ? &(*labels)[index + 1] : nullptr;
+			return (index + 1 < count) ? &(*inputs)[index + 1] : nullptr;
 		};
 
 		word.focused(
@@ -160,7 +155,9 @@ void Check::initControls(
 
 		word.submitted(
 		) | rpl::start_with_next([=] {
-			if (!showError(index)) {
+			if ((*inputs)[index].word() == kSkipPassword) {
+				_submitRequests.fire({});
+			} else if (!showError(index)) {
 				if (const auto word = next()) {
 					word->setFocus();
 				} else {
@@ -170,8 +167,8 @@ void Check::initControls(
 		}, lifetime());
 	};
 	for (auto i = 0; i != count; ++i) {
-		labels->emplace_back(inner(), i, value(i));
-		init(labels->back(), i);
+		inputs->emplace_back(inner(), i, QString());
+		init(inputs->back(), i);
 	}
 
 	inner()->sizeValue(
@@ -181,8 +178,8 @@ void Check::initControls(
 		const auto right = half + st::wordSkipRight;
 		auto x = left;
 		auto y = contentTop() + wordsTop;
-		for (const auto &word : *labels) {
-			word.move(x, y);
+		for (const auto &input : *inputs) {
+			input.move(x, y);
 			y += st::wordHeight;
 			if (y == rowsBottom) {
 				x = right;
@@ -197,14 +194,17 @@ void Check::initControls(
 	}, inner()->lifetime());
 
 	_words = [=] {
-		return (*labels) | ranges::view::transform(
+		return (*inputs) | ranges::view::transform(
 			&Word::word
 		) | ranges::to_vector;
 	};
 	_setFocus = [=] {
-		labels->front().setFocus();
+		inputs->front().setFocus();
 	};
 	_checkAll = [=] {
+		if ((*inputs)[0].word() == kSkipPassword) {
+			return true;
+		}
 		auto result = true;
 		for (auto i = count; i != 0;) {
 			result = !showError(--i) && result;

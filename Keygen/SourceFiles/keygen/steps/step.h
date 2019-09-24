@@ -14,6 +14,7 @@ struct TextWithEntities;
 
 namespace Ui {
 class LottieAnimation;
+class SlideAnimation;
 class CrossFadeAnimation;
 class RpWidget;
 class FlatLabel;
@@ -29,6 +30,11 @@ struct NextButtonState {
 	QString text;
 	int top = 0;
 	int width = 0;
+};
+
+enum class Direction {
+	Forward,
+	Backward,
 };
 
 class Step {
@@ -50,7 +56,7 @@ public:
 	[[nodiscard]] rpl::producer<> nextClicks() const;
 	[[nodiscard]] rpl::producer<float64> coverShown() const;
 
-	void showAnimated(not_null<Step*> previous);
+	void showAnimated(not_null<Step*> previous, Direction direction);
 	virtual void setFocus();
 
 	[[nodiscard]] rpl::lifetime &lifetime();
@@ -58,7 +64,6 @@ public:
 protected:
 	[[nodiscard]] not_null<Ui::RpWidget*> inner() const;
 	[[nodiscard]] int contentTop() const;
-	[[nodiscard]] int contentBottom() const;
 
 	void setTitle(rpl::producer<TextWithEntities> text, int top = 0);
 	void setDescription(rpl::producer<TextWithEntities> text, int top = 0);
@@ -67,25 +72,45 @@ protected:
 
 	void showLottie(const QString &path, int top, int height);
 
+	[[nodiscard]] virtual QImage grabForAnimation(QRect rect) const;
+
 private:
-	struct AnimationData;
+	struct CoverAnimationData;
 	struct CoverAnimation {
 		CoverAnimation() = default;
-		CoverAnimation(CoverAnimation &&other) = default;
-		CoverAnimation &operator=(CoverAnimation &&other) = default;
+		CoverAnimation(CoverAnimation&&) = default;
+		CoverAnimation &operator=(CoverAnimation&&) = default;
 		~CoverAnimation();
 
 		std::unique_ptr<Ui::LottieAnimation> lottie;
 		std::unique_ptr<Ui::CrossFadeAnimation> title;
 		std::unique_ptr<Ui::CrossFadeAnimation> description;
 
-		// From description bottom till the next button top.
-		QPixmap contentSnapshotWas;
-		QPixmap contentSnapshotNow;
+		// From description bottom till the bottom.
+		QPixmap contentWas;
+		QPixmap contentNow;
 		int contentWasBottom = 0;
 		int contentNowBottom = 0;
 		int lottieTop = 0;
 		int lottieHeight = 0;
+	};
+	struct SlideAnimationData;
+	struct SlideAnimation {
+		SlideAnimation() = default;
+		SlideAnimation(SlideAnimation&&) = default;
+		SlideAnimation &operator=(SlideAnimation&&) = default;
+		~SlideAnimation();
+
+		std::unique_ptr<Ui::LottieAnimation> lottieWas;
+		std::unique_ptr<Ui::LottieAnimation> lottieNow;
+
+		std::unique_ptr<Ui::SlideAnimation> slide;
+		int slideTop = 0;
+		int slideWidth = 0;
+		int lottieWasTop = 0;
+		int lottieWasHeight = 0;
+		int lottieNowTop = 0;
+		int lottieNowHeight = 0;
 	};
 
 	[[nodiscard]] Ui::ScrollArea *resolveScrollArea();
@@ -97,20 +122,33 @@ private:
 	void initCover();
 
 	void showAnimatedCover(not_null<Step*> previous);
+	void showAnimatedSlide(not_null<Step*> previous, Direction direction);
 	void prepareCoverMask();
 	void paintContent(QRect clip);
 	void paintCover(QPainter &p, int top, QRect clip);
 	void showFinished();
 
-	[[nodiscard]] AnimationData prepareAnimationData();
-	[[nodiscard]] QPixmap prepareContentSnapshot() const;
-	void showAnimationCallback();
-	void paintContentSnapshot(
+	[[nodiscard]] int coverAnimationContentTop() const;
+	[[nodiscard]] int slideAnimationContentTop() const;
+	[[nodiscard]] int animationContentBottom() const;
+
+	[[nodiscard]] CoverAnimationData prepareCoverAnimationData();
+	[[nodiscard]] QPixmap prepareCoverAnimationContent() const;
+	void coverAnimationCallback();
+	void paintCoverAnimation(QPainter &p, QRect clip);
+	void paintCoverAnimationContent(
 		QPainter &p,
 		const QPixmap &snapshot,
 		int snapshotBottom,
 		float64 alpha,
 		float64 howMuchHidden);
+	[[nodiscard]] SlideAnimationData prepareSlideAnimationData();
+	[[nodiscard]] QImage prepareSlideAnimationContent() const;
+	void adjustSlideSnapshots(
+		SlideAnimationData &was,
+		SlideAnimationData &now);
+	void slideAnimationCallback();
+	void paintSlideAnimation(QPainter &p, QRect clip);
 
 	[[nodiscard]] QRect lottieGeometry(int top, int height) const;
 
@@ -125,9 +163,9 @@ private:
 	base::unique_qptr<Ui::FlatLabel> _title;
 	base::unique_qptr<Ui::FlatLabel> _description;
 
-	Ui::Animations::Simple _showAnimation;
+	Ui::Animations::Simple _coverAnimationValue;
 	CoverAnimation _coverAnimation;
-	//std::unique_ptr<Ui::SlideAnimation> _slideAnimation;
+	SlideAnimation _slideAnimation;
 	QPixmap _coverMask;
 	rpl::variable<float64> _coverShown = 0.;
 

@@ -9,6 +9,8 @@
 #include "styles/style_layers.h"
 #include "styles/style_keygen.h"
 
+#include <QtGui/QtEvents>
+
 namespace Ui {
 
 void InitMessageBox(
@@ -21,6 +23,21 @@ void InitMessageBox(
 		box.get(),
 		std::move(text),
 		st::boxLabel));
+	box->events(
+	) | rpl::filter([](not_null<QEvent*> e) {
+		return (e->type() == QEvent::KeyPress);
+	}) | rpl::map([](not_null<QEvent*> e) {
+		return static_cast<QKeyEvent*>(e.get());
+	}) | rpl::start_with_next([=](not_null<QKeyEvent*> e) {
+		if (e->key() == Qt::Key_Escape) {
+			e->accept();
+			box->closeBox();
+		} else if (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return) {
+			e->accept();
+			box->triggerButton(0);
+		}
+	}, box->lifetime());
+	box->setInnerFocus();
 }
 
 } // namespace Ui

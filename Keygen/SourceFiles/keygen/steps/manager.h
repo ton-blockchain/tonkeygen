@@ -21,8 +21,6 @@ class FadeWrap;
 
 namespace Keygen::Steps {
 
-class Step;
-
 class Manager final {
 public:
 	explicit Manager(Fn<bool(QString)> isGoodWord);
@@ -36,7 +34,7 @@ public:
 	[[nodiscard]] rpl::producer<std::vector<QString>> checkRequests() const;
 
 	enum class Action {
-		ShowWords,
+		ShowWordsBack,
 		CopyKey,
 		SaveKey,
 		NewKey,
@@ -50,8 +48,8 @@ public:
 	void showIntro();
 	void showRandomSeed();
 	void showCreated(std::vector<QString> &&words);
-	void showWords(std::vector<QString> &&words);
-	void showCheck();
+	void showWords(std::vector<QString> &&words, Direction direction);
+	void showCheck(Direction direction);
 	void showCheckDone(const QString &publicKey);
 	void showCheckFail();
 	void showDone(const QString &publicKey);
@@ -63,6 +61,7 @@ public:
 private:
 	void showStep(
 		std::unique_ptr<Step> step,
+		Direction direction,
 		FnMut<void()> next = nullptr,
 		FnMut<void()> back = nullptr);
 	void confirmNewKey();

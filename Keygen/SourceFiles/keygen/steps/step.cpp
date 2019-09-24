@@ -10,6 +10,7 @@
 #include "ui/widgets/scroll_area.h"
 #include "ui/widgets/labels.h"
 #include "ui/widgets/buttons.h"
+#include "ui/effects/slide_animation.h"
 #include "ui/wrap/fade_wrap.h"
 #include "ui/text/text_utilities.h"
 #include "ui/lottie_widget.h"
@@ -17,19 +18,50 @@
 #include "styles/palette.h"
 
 namespace Keygen::Steps {
+namespace {
 
-struct Step::AnimationData {
+QImage AddImageMargins(const QImage &source, QMargins margins) {
+	const auto pixelRatio = style::DevicePixelRatio();
+	const auto was = source.size() / pixelRatio;
+	const auto size = QRect({}, was).marginsAdded(margins).size();
+	auto large = QImage(
+		size * pixelRatio,
+		QImage::Format_ARGB32_Premultiplied);
+	large.setDevicePixelRatio(pixelRatio);
+	large.fill(Qt::transparent);
+	{
+		auto p = QPainter(&large);
+		p.drawImage(
+			QRect({ margins.left(), margins.top() }, was),
+			source);
+	}
+	return large;
+}
+
+} // namespace
+
+struct Step::CoverAnimationData {
 	Type type = Type();
 	std::unique_ptr<Ui::LottieAnimation> lottie;
 	int lottieTop = 0;
 	int lottieHeight = 0;
 	Ui::CrossFadeAnimation::Data title;
 	Ui::CrossFadeAnimation::Data description;
-	QPixmap contentSnapshot;
+	QPixmap content;
 	int contentBottom = 0;
 };
 
+struct Step::SlideAnimationData {
+	Type type = Type();
+	std::unique_ptr<Ui::LottieAnimation> lottie;
+	int lottieTop = 0;
+	int lottieHeight = 0;
+	QImage content;
+	int contentTop = 0;
+};
+
 Step::CoverAnimation::~CoverAnimation() = default;
+Step::SlideAnimation::~SlideAnimation() = default;
 
 Step::Step(Type type)
 : _type(type)
@@ -109,9 +141,7 @@ void Step::initNextButton() {
 }
 
 void Step::initCover() {
-	if (_type == Type::Scroll) {
-		return;
-	} else if (_type == Type::Intro) {
+	if (_type == Type::Intro) {
 		prepareCoverMask();
 
 		inner()->paintRequest(
@@ -128,9 +158,12 @@ void Step::initCover() {
 }
 
 void Step::paintContent(QRect clip) {
-	const auto isIntro = (_type == Type::Intro);
-	const auto dt = _showAnimation.value(1.);
-	if (!_showAnimation.animating()) {
+	if (_slideAnimation.slide) {
+		if (!_slideAnimation.slide->animating()) {
+			showFinished();
+			return;
+		}
+	} else if (!_coverAnimationValue.animating()) {
 		if (_coverAnimation.title) {
 			showFinished();
 		}
@@ -138,6 +171,16 @@ void Step::paintContent(QRect clip) {
 	}
 
 	auto p = QPainter(_widget.get());
+	if (_slideAnimation.slide) {
+		paintSlideAnimation(p, clip);
+	} else {
+		paintCoverAnimation(p, clip);
+	}
+}
+
+void Step::paintCoverAnimation(QPainter &p, QRect clip) {
+	const auto dt = _coverAnimationValue.value(1.);
+	const auto isIntro = (_type == Type::Intro);
 	const auto progress = isIntro
 		? anim::easeOutCirc(1., dt)
 		: anim::linear(1., dt);
@@ -163,24 +206,33 @@ void Step::paintContent(QRect clip) {
 		departingAlpha,
 		arrivingAlpha);
 
-	paintContentSnapshot(
+	paintCoverAnimationContent(
 		p,
-		_coverAnimation.contentSnapshotWas,
+		_coverAnimation.contentWas,
 		_coverAnimation.contentWasBottom,
 		departingAlpha,
 		showCoverMethod);
-	paintContentSnapshot(
+	paintCoverAnimationContent(
 		p,
-		_coverAnimation.contentSnapshotNow,
+		_coverAnimation.contentNow,
 		_coverAnimation.contentNowBottom,
 		arrivingAlpha,
 		1. - hideCoverMethod);
 }
 
+void Step::paintSlideAnimation(QPainter &p, QRect clip) {
+	const auto left = (_widget->width() - _slideAnimation.slideWidth) / 2;
+	const auto top = _slideAnimation.slideTop;
+	_slideAnimation.slide->paintFrame(p, left, top, _widget->width());
+}
+
 void Step::showFinished() {
-	_showAnimation.stop();
-	if (_type != Type::Intro && _coverAnimation.lottie) {
-		_lottie = std::move(_coverAnimation.lottie);
+	_coverAnimationValue.stop();
+	if (_type != Type::Intro
+		&& (_coverAnimation.lottie || _slideAnimation.lottieNow)) {
+		_lottie = _coverAnimation.lottie
+			? std::move(_coverAnimation.lottie)
+			: std::move(_slideAnimation.lottieNow);
 		_lottie->attach(inner());
 		_lottie->setOpacity(1.);
 		_lottie->setGeometry(lottieGeometry(
@@ -188,12 +240,11 @@ void Step::showFinished() {
 			_lottieHeight));
 	}
 	_coverAnimation = CoverAnimation();
+	_slideAnimation = SlideAnimation();
 	if (_scroll) {
 		_scroll->show();
 	}
 	inner()->show();
-	//_slideAnimation.reset();
-	//prepareCoverMask();
 	setFocus();
 }
 
@@ -255,7 +306,7 @@ void Step::paintCover(QPainter &p, int top, QRect clip) {
 	st::coverIcon.paint(p, iconLeft, iconTop, coverWidth);
 }
 
-void Step::paintContentSnapshot(
+void Step::paintCoverAnimationContent(
 		QPainter &p,
 		const QPixmap &snapshot,
 		int snapshotBottom,
@@ -298,31 +349,67 @@ int Step::desiredHeight() const {
 	return st::stepHeight;
 }
 
-Step::AnimationData Step::prepareAnimationData() {
-	auto result = AnimationData();
+Step::CoverAnimationData Step::prepareCoverAnimationData() {
+	Expects(_title != nullptr);
+	Expects(_description != nullptr);
+
+	auto result = CoverAnimationData();
 	result.type = _type;
 	if (_lottie) {
 		_lottie->detach();
+		result.lottie = std::move(_lottie);
+		result.lottieTop = contentTop() + _lottieTop;
+		result.lottieHeight = _lottieHeight;
 	}
-	result.lottie = std::move(_lottie);
-	result.lottieTop = contentTop() + _lottieTop;
-	result.lottieHeight = _lottieHeight;
 	result.title = _title->crossFadeData(st::windowBg);
 	result.description = _description->crossFadeData(st::windowBg);
-	result.contentSnapshot = prepareContentSnapshot();
-	result.contentBottom = contentBottom();
+	result.content = prepareCoverAnimationContent();
+	result.contentBottom = animationContentBottom();
 	return result;
 }
 
-QPixmap Step::prepareContentSnapshot() const {
-	const auto otherTop = _description->y() + _description->height();
-	const auto otherWidth = _description->width();
+QPixmap Step::prepareCoverAnimationContent() const {
+	Expects(_description != nullptr);
+
+	const auto otherTop = coverAnimationContentTop();
+	const auto otherWidth = _description->naturalWidth();
 	const auto otherRect = QRect(
 		(inner()->width() - otherWidth) / 2,
 		otherTop,
 		otherWidth,
-		contentBottom() - otherTop);
-	return Ui::GrabWidget(inner(), otherRect);
+		animationContentBottom() - otherTop);
+
+	return Ui::PixmapFromImage(grabForAnimation(otherRect));
+}
+
+Step::SlideAnimationData Step::prepareSlideAnimationData() {
+	Expects(_title != nullptr);
+
+	auto result = SlideAnimationData();
+	result.type = _type;
+	if (_lottie) {
+		_lottie->detach();
+		result.lottie = std::move(_lottie);
+		result.lottieTop = contentTop() + _lottieTop;
+		result.lottieHeight = _lottieHeight;
+	}
+	result.content = prepareSlideAnimationContent();
+	const auto scrollTop = (_scroll ? _scroll->scrollTop() : 0);
+	result.contentTop = slideAnimationContentTop() - scrollTop;
+	return result;
+}
+
+QImage Step::prepareSlideAnimationContent() const {
+	Expects(_title != nullptr);
+
+	const auto contentTop = slideAnimationContentTop();
+	const auto contentWidth = _description->naturalWidth();
+	const auto contentRect = QRect(
+		(inner()->width() - contentWidth) / 2,
+		contentTop,
+		contentWidth,
+		animationContentBottom() - contentTop);
+	return grabForAnimation(contentRect);
 }
 
 not_null<Ui::RpWidget*> Step::inner() const {
@@ -334,8 +421,31 @@ int Step::contentTop() const {
 	return (std::max(desired, inner()->height()) - desired) / 2;
 }
 
-int Step::contentBottom() const {
-	return contentTop() + desiredHeight();
+int Step::coverAnimationContentTop() const {
+	Expects(_description != nullptr);
+
+	return std::max(
+		_description->y() + _description->height(),
+		_scroll ? _scroll->scrollTop() : 0);
+}
+
+int Step::slideAnimationContentTop() const {
+	Expects(_title != nullptr);
+
+	return std::max(
+		_title->y(),
+		_scroll ? _scroll->scrollTop() : 0);
+}
+
+int Step::animationContentBottom() const {
+	const auto bottom = contentTop() + desiredHeight();
+	return _scroll
+		? std::min(bottom, _scroll->scrollTop() + _scroll->height())
+		: bottom;
+}
+
+QImage Step::grabForAnimation(QRect rect) const {
+	return Ui::GrabWidgetToImage(inner(), rect);
 }
 
 void Step::setTitle(rpl::producer<TextWithEntities> text, int top) {
@@ -422,17 +532,19 @@ void Step::prepareCoverMask() {
 	_coverMask = Ui::PixmapFromImage(std::move(mask));
 }
 
-void Step::showAnimated(not_null<Step*> previous) {
+void Step::showAnimated(not_null<Step*> previous, Direction direction) {
 	if ((previous->_type == Type::Intro) != (_type == Type::Intro)) {
 		showAnimatedCover(previous);
+	} else {
+		showAnimatedSlide(previous, direction);
 	}
 }
 
 void Step::showAnimatedCover(not_null<Step*> previous) {
 	prepareCoverMask();
 
-	auto was = previous->prepareAnimationData();
-	auto now = prepareAnimationData();
+	auto was = previous->prepareCoverAnimationData();
+	auto now = prepareCoverAnimationData();
 	if (was.lottie) {
 		_coverAnimation.lottie = std::move(was.lottie);
 		_coverAnimation.lottieTop = was.lottieTop;
@@ -450,9 +562,9 @@ void Step::showAnimatedCover(not_null<Step*> previous) {
 		st::windowBg,
 		std::move(was.description),
 		std::move(now.description));
-	_coverAnimation.contentSnapshotWas = std::move(was.contentSnapshot);
+	_coverAnimation.contentWas = std::move(was.content);
 	_coverAnimation.contentWasBottom = was.contentBottom;
-	_coverAnimation.contentSnapshotNow = std::move(now.contentSnapshot);
+	_coverAnimation.contentNow = std::move(now.content);
 	_coverAnimation.contentNowBottom = now.contentBottom;
 
 	if (_coverAnimation.lottie) {
@@ -463,16 +575,82 @@ void Step::showAnimatedCover(not_null<Step*> previous) {
 	if (_scroll) {
 		_scroll->hide();
 	}
-	_showAnimation.start(
-		[=] { showAnimationCallback(); },
+	_coverAnimationValue.start(
+		[=] { coverAnimationCallback(); },
 		0.,
 		1.,
 		st::coverDuration);
-	showAnimationCallback();
+	coverAnimationCallback();
 }
 
-void Step::showAnimationCallback() {
-	const auto dt = _showAnimation.value(1.);
+void Step::adjustSlideSnapshots(
+		SlideAnimationData &was,
+		SlideAnimationData &now) {
+	const auto pixelRatio = style::DevicePixelRatio();
+	const auto wasSize = was.content.size() / pixelRatio;
+	const auto nowSize = now.content.size() / pixelRatio;
+	const auto wasBottom = was.contentTop + wasSize.height();
+	const auto nowBottom = now.contentTop + nowSize.height();
+	const auto widthDelta = nowSize.width() - wasSize.width();
+	auto wasMargins = QMargins();
+	auto nowMargins = QMargins();
+	wasMargins.setTop(std::max(was.contentTop - now.contentTop, 0));
+	nowMargins.setTop(std::max(now.contentTop - was.contentTop, 0));
+	wasMargins.setLeft(std::max(widthDelta / 2, 0));
+	nowMargins.setLeft(-std::min(widthDelta / 2, 0));
+	wasMargins.setRight(std::max(widthDelta - (widthDelta / 2), 0));
+	nowMargins.setRight(-std::min(widthDelta - (widthDelta / 2), 0));
+	wasMargins.setBottom(std::max(nowBottom - wasBottom, 0));
+	nowMargins.setBottom(std::max(wasBottom - nowBottom, 0));
+	was.content = AddImageMargins(was.content, wasMargins);
+	now.content = AddImageMargins(now.content, nowMargins);
+	was.contentTop = now.contentTop = std::min(
+		was.contentTop,
+		now.contentTop);
+}
+
+void Step::showAnimatedSlide(not_null<Step*> previous, Direction direction) {
+	const auto pixelRatio = style::DevicePixelRatio();
+	auto was = previous->prepareSlideAnimationData();
+	auto now = prepareSlideAnimationData();
+	_slideAnimation.slide = std::make_unique<Ui::SlideAnimation>();
+
+	adjustSlideSnapshots(was, now);
+	Assert(now.contentTop == was.contentTop);
+	Assert(now.content.size() == was.content.size());
+
+	_slideAnimation.slide->setSnapshots(
+		Ui::PixmapFromImage(std::move(was.content)),
+		Ui::PixmapFromImage(std::move(now.content)));
+	_slideAnimation.slideTop = was.contentTop;
+	_slideAnimation.slideWidth = was.content.width() / pixelRatio;
+	_slideAnimation.lottieWas = std::move(was.lottie);
+	_slideAnimation.lottieWasTop = was.lottieTop;
+	_slideAnimation.lottieWasHeight = was.lottieHeight;
+	_slideAnimation.lottieNow = std::move(now.lottie);
+	_slideAnimation.lottieNowTop = now.lottieTop;
+	_slideAnimation.lottieNowHeight = now.lottieHeight;
+
+	if (_slideAnimation.lottieWas) {
+		_slideAnimation.lottieWas->attach(_widget.get());
+	}
+	if (_slideAnimation.lottieNow) {
+		_slideAnimation.lottieNow->attach(_widget.get());
+	}
+
+	inner()->hide();
+	if (_scroll) {
+		_scroll->hide();
+	}
+	_slideAnimation.slide->start(
+		(direction == Direction::Backward),
+		[=] { slideAnimationCallback(); },
+		st::coverDuration);
+	slideAnimationCallback();
+}
+
+void Step::coverAnimationCallback() {
+	const auto dt = _coverAnimationValue.value(1.);
 	const auto coverShown = (_type == Type::Intro)
 		? anim::easeOutCirc(1., dt)
 		: (1. - anim::linear(1., dt));
@@ -484,6 +662,33 @@ void Step::showAnimationCallback() {
 		_coverAnimation.lottie->setGeometry(lottieGeometry(
 			_coverAnimation.lottieTop + coverShown * st::coverHeight,
 			height));
+	}
+	_widget->update();
+}
+
+void Step::slideAnimationCallback() {
+	const auto state = _slideAnimation.slide->state();
+	if (_slideAnimation.lottieWas) {
+		const auto shown = (1. - state.leftProgress);
+		const auto scale = state.leftAlpha;
+		const auto fullHeight = _slideAnimation.lottieWasHeight;
+		const auto height = scale * fullHeight;
+		const auto delta = (1. - shown) * _slideAnimation.slideWidth;
+		_slideAnimation.lottieWas->setOpacity(state.leftAlpha);
+		_slideAnimation.lottieWas->setGeometry(lottieGeometry(
+			_slideAnimation.lottieWasTop + (1. - scale) * fullHeight / 2.,
+			height).translated(-delta, 0));
+	}
+	if (_slideAnimation.lottieNow) {
+		const auto shown = state.rightProgress;
+		const auto scale = state.rightAlpha;
+		const auto fullHeight = _slideAnimation.lottieNowHeight;
+		const auto height = scale * fullHeight;
+		const auto delta = (1. - shown) * _slideAnimation.slideWidth;
+		_slideAnimation.lottieNow->setOpacity(state.rightAlpha);
+		_slideAnimation.lottieNow->setGeometry(lottieGeometry(
+			_slideAnimation.lottieNowTop + (1. - scale) * fullHeight / 2.,
+			height).translated(delta, 0));
 	}
 	_widget->update();
 }

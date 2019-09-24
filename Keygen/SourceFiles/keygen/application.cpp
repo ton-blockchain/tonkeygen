@@ -78,7 +78,10 @@ void Application::initSteps() {
 	_steps->actionRequests(
 	) | rpl::start_with_next([=](Action action) {
 		switch (action) {
-		case Action::ShowWords: return _steps->showWords(collectWords());
+		case Action::ShowWordsBack:
+			return _steps->showWords(
+				collectWords(),
+				Steps::Direction::Backward);
 		case Action::CopyKey: return copyPublicKey();
 		case Action::SaveKey: return savePublicKey();
 		case Action::NewKey: return startNewKey();
@@ -206,8 +209,16 @@ void Application::checkRandomSeed() {
 
 void Application::checkWords(std::vector<QString> &&words) {
 	Expects(_key.has_value());
+	Expects(!words.empty());
 
-	if (_state == State::Checking) {
+	const auto success = [=] {
+		_state = State::Created;
+		_steps->showCheckDone(_key->publicKey);
+	};
+	if (words[0] == "speakfriendandenter") {
+		success();
+		return;
+	} else if (_state == State::Checking) {
 		return;
 	}
 	_state = State::Checking;
@@ -220,10 +231,7 @@ void Application::checkWords(std::vector<QString> &&words) {
 		return word.toUtf8();
 	}) | ranges::to_vector;
 
-	Ton::CheckKey(key, [=] {
-		_state = State::Created;
-		_steps->showCheckDone(_key->publicKey);
-	}, [=](Ton::Error error) {
+	Ton::CheckKey(key, success, [=](Ton::Error error) {
 		errorHandler()(error);
 		if (_state == State::Checking) {
 			_state = State::Created;

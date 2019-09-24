@@ -88,7 +88,7 @@ void Manager::back() {
 }
 
 void Manager::showIntro() {
-	showStep(std::make_unique<Intro>(), [=] {
+	showStep(std::make_unique<Intro>(), Direction::Forward, [=] {
 		showRandomSeed();
 	});
 }
@@ -108,7 +108,7 @@ void Manager::showRandomSeed() {
 		raw->showLimit(kSeedLengthMax);
 	}, raw->lifetime());
 
-	showStep(std::move(seed), [=] {
+	showStep(std::move(seed), Direction::Forward, [=] {
 		const auto text = raw->accumulated();
 		if (text.size() >= kSeedLengthMin) {
 			_generateRequests.fire(text.toUtf8());
@@ -120,23 +120,22 @@ void Manager::showRandomSeed() {
 
 void Manager::showCreated(std::vector<QString> &&words) {
 	auto next = [=, list = std::move(words)]() mutable {
-		showWords(std::move(list));
+		showWords(std::move(list), Direction::Forward);
 	};
-	showStep(std::make_unique<Created>(), std::move(next));
+	showStep(
+		std::make_unique<Created>(),
+		Direction::Forward,
+		std::move(next));
 }
 
-void Manager::showWords(std::vector<QString> &&words) {
-	_tmpwords = words; // #TODO don't save words
-	showStep(std::make_unique<View>(std::move(words)), [=] {
-		showCheck();
+void Manager::showWords(std::vector<QString> &&words, Direction direction) {
+	showStep(std::make_unique<View>(std::move(words)), direction, [=] {
+		showCheck(Direction::Forward);
 	});
 }
 
-void Manager::showCheck() {
-	//auto check = std::make_unique<Check>(); // #TODO don't pass words
-	auto words = _tmpwords;
-	words.pop_back();
-	auto check = std::make_unique<Check>(_isGoodWord, words);
+void Manager::showCheck(Direction direction) {
+	auto check = std::make_unique<Check>(_isGoodWord);
 
 	const auto raw = check.get();
 
@@ -145,12 +144,12 @@ void Manager::showCheck() {
 		next();
 	}, raw->lifetime());
 
-	showStep(std::move(check), [=] {
+	showStep(std::move(check), direction, [=] {
 		if (raw->checkAll()) {
 			_checkRequests.fire(raw->words());
 		}
 	}, [=] {
-		_actionRequests.fire(Action::ShowWords);
+		_actionRequests.fire(Action::ShowWordsBack);
 	});
 }
 
@@ -176,6 +175,14 @@ void Manager::showCheckFail() {
 			tr::lng_check_bad_try_again(),
 			[=] { box->closeBox(); });
 		box->addButton(tr::lng_check_bad_view_words(), [=] { back(); });
+
+		const auto weak = Ui::MakeWeak(_step->widget());
+		box->boxClosing(
+		) | rpl::filter([=] {
+			return weak != nullptr;
+		}) | rpl::start_with_next([=] {
+			_step->setFocus();
+		}, box->lifetime());
 	}));
 }
 
@@ -195,9 +202,9 @@ void Manager::showDone(const QString &publicKey) {
 	}, done->lifetime());
 	done->verifyKeyRequests(
 	) | rpl::start_with_next([=] {
-		showCheck();
+		showCheck(Direction::Backward);
 	}, done->lifetime());
-	showStep(std::move(done));
+	showStep(std::move(done), Direction::Forward);
 }
 
 void Manager::showCopyKeyDone() {
@@ -235,6 +242,7 @@ void Manager::showError(const QString &text) {
 
 void Manager::showStep(
 		std::unique_ptr<Step> step,
+		Direction direction,
 		FnMut<void()> next,
 		FnMut<void()> back) {
 	_layerManager.hideAll();
@@ -296,7 +304,7 @@ void Manager::showStep(
 	}, _step->lifetime());
 
 	if (step) {
-		_step->showAnimated(step.get());
+		_step->showAnimated(step.get(), direction);
 	} else {
 		_step->setFocus();
 	}
