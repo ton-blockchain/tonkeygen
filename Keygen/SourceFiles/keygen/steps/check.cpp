@@ -178,12 +178,13 @@ void Check::initControls(Fn<bool(QString)> isGoodWord) {
 		const auto right = half + st::wordSkipRight;
 		auto x = left;
 		auto y = contentTop() + wordsTop;
+		auto index = 0;
 		for (const auto &input : *inputs) {
 			input.move(x, y);
 			y += st::wordHeight;
-			if (y == rowsBottom) {
+			if (++index == rows) {
 				x = right;
-				y = wordsTop;
+				y = contentTop() + wordsTop;
 			}
 		}
 

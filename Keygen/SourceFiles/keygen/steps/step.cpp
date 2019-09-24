@@ -127,7 +127,7 @@ void Step::initNextButton() {
 	_nextButton->toggleOn(_nextButtonState.value(
 	) | rpl::map([](const NextButtonState &state) {
 		return !state.text.isEmpty();
-	}));
+	}))->setDuration(0);
 
 	rpl::combine(
 		_nextButtonState.value(),
