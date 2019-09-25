@@ -14,6 +14,7 @@
 #include "ui/word_suggestions.h"
 #include "base/event_filter.h"
 #include "base/qt_signal_producer.h"
+#include "base/platform/base_platform_layout_switch.h"
 #include "styles/style_keygen.h"
 
 #include <QtGui/QtEvents>
@@ -165,6 +166,7 @@ void Word::move(int left, int top) const {
 }
 
 void Word::setFocus() const {
+	base::Platform::SwitchKeyboardLayoutToEnglish();
 	_word->setFocus();
 }
 
