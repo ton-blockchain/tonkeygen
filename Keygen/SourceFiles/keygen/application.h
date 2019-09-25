@@ -62,7 +62,7 @@ private:
 
 	State _state = State::Starting;
 	QByteArray _randomSeed;
-	std::vector<QString> _validWords;
+	base::flat_set<QString> _validWords;
 	std::optional<Ton::Key> _key;
 
 	rpl::lifetime _lifetime;

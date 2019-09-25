@@ -54,7 +54,8 @@ Application::~Application() {
 
 bool Application::isGoodWord(const QString &word) const {
 	return !word.isEmpty()
-		&& (_validWords.empty() || base::contains(_validWords, word));
+		&& (_validWords.empty()
+			|| _validWords.contains(word.trimmed().toLower()));
 }
 
 void Application::initSteps() {
@@ -188,11 +189,12 @@ void Application::setRandomSeed(const QByteArray &seed) {
 
 void Application::getValidWords() {
 	Ton::GetValidWords([=](std::vector<QByteArray> &&validWords) {
-		_validWords = ranges::view::all(
+		auto &&words = ranges::view::all(
 			validWords
 		) | ranges::view::transform([](const QByteArray &value) {
-			return QString::fromUtf8(value);
-		}) | ranges::to_vector;
+			return QString::fromUtf8(value).trimmed().toLower();
+		});
+		_validWords = { words.begin(), words.end() };
 	}, errorHandler());
 }
 
