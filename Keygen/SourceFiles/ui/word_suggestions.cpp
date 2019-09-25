@@ -83,7 +83,7 @@ void WordSuggestions::selectUp() {
 void WordSuggestions::select(int index) {
 	Expects(!_words.empty());
 
-	index = std::clamp(index, 0, int(_words.size()));
+	index = std::clamp(index, 0, int(_words.size()) - 1);
 	if (_selected == index) {
 		return;
 	}
