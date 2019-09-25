@@ -118,15 +118,6 @@ void WordSuggestions::paintRows() {
 }
 
 QImage WordSuggestions::prepareFrame() const {
-	const auto radius = st::suggestionsRadius;
-	const auto thickness = st::suggestionShadowWidth;
-	const auto left = thickness / 2;
-	const auto top = -2 * radius;
-	const auto width = _widget->width() - thickness;
-	const auto height = _widget->height()
-		- top
-		+ ((thickness / 2) - thickness);
-
 	const auto pixelRatio = style::DevicePixelRatio();
 	if (_frame.size() != _widget->size() * pixelRatio) {
 		_frame = QImage(
@@ -134,15 +125,18 @@ QImage WordSuggestions::prepareFrame() const {
 			QImage::Format_ARGB32_Premultiplied);
 	}
 	_frame.fill(st::windowBg->c);
+	_frame.setDevicePixelRatio(pixelRatio);
 	{
 		auto p = QPainter(&_frame);
+
+		const auto thickness = st::suggestionShadowWidth;
 
 		p.setPen(st::windowFg);
 		p.setFont(st::normalFont);
 		auto index = 0;
 		const auto wordLeft = thickness;
 		auto wordTop = st::suggestionsSkip - _scroll->scrollTop();
-		const auto wordWidth = width - thickness;
+		const auto wordWidth = _widget->width() - 2 * thickness;
 		const auto wordHeight = st::suggestionHeight;
 		for (const auto &word : _words) {
 			if (index == (_pressed >= 0 ? _pressed : _selected)) {
@@ -161,12 +155,20 @@ QImage WordSuggestions::prepareFrame() const {
 			++index;
 		}
 
+		const auto radius = st::suggestionsRadius;
+		const auto left = float64(thickness) / 2;
+		const auto top = -2. * radius;
+		const auto width = float64(_widget->width()) - thickness;
+		const auto height = float64(_widget->height())
+			- top
+			+ ((thickness / 2.) - thickness);
+
 		PainterHighQualityEnabler hq(p);
 		p.setBrush(Qt::NoBrush);
 		auto pen = st::defaultInputField.borderFg->p;
 		pen.setWidth(thickness);
 		p.setPen(pen);
-		p.drawRoundedRect(left, top, width, height, radius, radius);
+		p.drawRoundedRect(QRectF{ left, top, width, height }, radius, radius);
 	}
 	return _frame;
 }
