@@ -154,3 +154,12 @@ doneKeyLabel: FlatLabel(defaultFlatLabel) {
 doneKeyTop: 144px;
 doneCopyTop: 294px;
 doneSaveTop: 346px;
+
+suggestionsScroll: defaultSolidScroll;
+suggestionsSkip: 4px;
+suggestionsRadius: 2px;
+suggestionsHeightMax: 106px;
+suggestionHeight: 28px;
+suggestionShadowWidth: 1px;
+suggestionLeft: 10px;
+suggestionTop: 5px;

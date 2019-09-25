@@ -32,7 +32,7 @@ constexpr auto kSaveKeyDoneDuration = crl::time(500);
 
 } // namespace
 
-Manager::Manager(Fn<bool(QString)> isGoodWord)
+Manager::Manager(Fn<std::vector<QString>(QString)> wordsByPrefix)
 : _content(std::make_unique<Ui::RpWidget>())
 , _nextButton(
 	std::in_place,
@@ -46,7 +46,7 @@ Manager::Manager(Fn<bool(QString)> isGoodWord)
 	_content.get(),
 	object_ptr<Ui::IconButton>(_content.get(), st::topBackButton))
 , _layerManager(_content.get())
-, _isGoodWord(std::move(isGoodWord)) {
+, _wordsByPrefix(std::move(wordsByPrefix)) {
 	initButtons();
 }
 
@@ -135,7 +135,7 @@ void Manager::showWords(std::vector<QString> &&words, Direction direction) {
 }
 
 void Manager::showCheck(Direction direction) {
-	auto check = std::make_unique<Check>(_isGoodWord);
+	auto check = std::make_unique<Check>(_wordsByPrefix);
 
 	const auto raw = check.get();
 

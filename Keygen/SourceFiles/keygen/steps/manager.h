@@ -23,7 +23,7 @@ namespace Keygen::Steps {
 
 class Manager final {
 public:
-	explicit Manager(Fn<bool(QString)> isGoodWord);
+	explicit Manager(Fn<std::vector<QString>(QString)> wordsByPrefix);
 	Manager(const Manager &other) = delete;
 	Manager &operator=(const Manager &other) = delete;
 	~Manager();
@@ -75,7 +75,7 @@ private:
 	NextButtonState _lastNextState;
 	Ui::LayerManager _layerManager;
 
-	const Fn<bool(QString)> _isGoodWord;
+	const Fn<std::vector<QString>(QString)> _wordsByPrefix;
 	std::vector<QString> _tmpwords;
 
 	std::unique_ptr<Step> _step;

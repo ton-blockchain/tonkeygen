@@ -52,7 +52,8 @@ private:
 	void savePublicKeyNow(const QByteArray &key);
 	void startNewKey();
 
-	[[nodiscard]] bool isGoodWord(const QString &word) const;
+	[[nodiscard]] std::vector<QString> wordsByPrefix(
+		const QString &word) const;
 	[[nodiscard]] std::vector<QString> collectWords() const;
 	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
@@ -63,6 +64,7 @@ private:
 	State _state = State::Starting;
 	QByteArray _randomSeed;
 	base::flat_set<QString> _validWords;
+	int _minimalValidWordLength = 1;
 	std::optional<Ton::Key> _key;
 
 	rpl::lifetime _lifetime;

@@ -40,7 +40,7 @@ namespace {
 Application::Application()
 : _window(std::make_unique<Ui::Window>())
 , _steps(std::make_unique<Steps::Manager>([&](const QString &word) {
-	return isGoodWord(word);
+	return wordsByPrefix(word);
 }))
 , _path(QStandardPaths::writableLocation(QStandardPaths::DataLocation)) {
 	initWindow();
@@ -52,10 +52,34 @@ Application::~Application() {
 	Ton::Finish();
 }
 
-bool Application::isGoodWord(const QString &word) const {
-	return !word.isEmpty()
-		&& (_validWords.empty()
-			|| _validWords.contains(word.trimmed().toLower()));
+std::vector<QString> Application::wordsByPrefix(const QString &word) const {
+	const auto adjusted = word.trimmed().toLower();
+	if (adjusted.size() < _minimalValidWordLength) {
+		return {};
+	} else if (_validWords.empty()) {
+		return { word };
+	}
+	auto prefix = QString();
+	auto count = 0;
+	auto maxCount = 0;
+	for (auto word : _validWords) {
+		if (word.midRef(0, 3) != prefix) {
+			prefix = word.mid(0, 3);
+			count = 1;
+		} else {
+			++count;
+		}
+		if (maxCount < count) {
+			maxCount = count;
+		}
+	}
+	auto result = std::vector<QString>();
+	const auto from = ranges::lower_bound(_validWords, adjusted);
+	const auto end = _validWords.end();
+	for (auto i = from; i != end && i->startsWith(adjusted); ++i) {
+		result.push_back(*i);
+	}
+	return result;
 }
 
 void Application::initSteps() {

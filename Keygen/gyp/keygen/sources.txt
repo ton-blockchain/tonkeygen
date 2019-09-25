@@ -33,6 +33,8 @@
 <(src_loc)/ui/message_box.h
 <(src_loc)/ui/public_key_label.cpp
 <(src_loc)/ui/public_key_label.h
+<(src_loc)/ui/word_suggestions.cpp
+<(src_loc)/ui/word_suggestions.h
 
 platforms: win
 <(res_loc)/win/Keygen.rc

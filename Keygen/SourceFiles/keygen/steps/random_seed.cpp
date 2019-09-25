@@ -118,10 +118,7 @@ void RandomSeed::initControls() {
 	}) | rpl::map([](not_null<QEvent*> e) {
 		return static_cast<QKeyEvent*>(e.get());
 	}) | rpl::filter([](not_null<QKeyEvent*> e) {
-		return (e->key() != Qt::Key_Escape)
-			&& (e->key() != Qt::Key_Enter)
-			&& (e->key() != Qt::Key_Return)
-			&& !e->text().isEmpty();
+		return !e->text().isEmpty() && e->text().begin()->isPrint();
 	}) | rpl::start_with_next([=](not_null<QKeyEvent*> e) {
 		append(e->text());
 	}, inner()->lifetime());
