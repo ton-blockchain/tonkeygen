@@ -502,7 +502,7 @@ void Step::setDescription(rpl::producer<TextWithEntities> text, int top) {
 rpl::producer<NextButtonState> Step::nextButtonState() const {
 	return (_type == Type::Scroll)
 		? rpl::single(NextButtonState())
-		: _nextButtonState.value();
+		: (_nextButtonState.value() | rpl::type_erased());
 }
 
 void Step::prepareCoverMask() {

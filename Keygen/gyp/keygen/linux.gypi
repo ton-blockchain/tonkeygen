@@ -19,11 +19,6 @@
       ],
     },
     'libraries': [
-      '-lcomposeplatforminputcontextplugin',
-      '-libusplatforminputcontextplugin',
-      '-lfcitxplatforminputcontextplugin',
-      '-lhimeplatforminputcontextplugin',
-      '-lnimfplatforminputcontextplugin',
 #      '<!(pkg-config 2> /dev/null --libs <@(pkgconfig_libs))',
     ],
     'cflags_cc': [
