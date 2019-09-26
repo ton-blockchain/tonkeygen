@@ -292,10 +292,12 @@ void Application::savePublicKeyNow(const QByteArray &key) {
 		_steps->showSaveKeyDone(path);
 	});
 	const auto getPath = [&] {
+		const auto where = QStandardPaths::writableLocation(
+			QStandardPaths::DocumentsLocation);
 		return QFileDialog::getSaveFileName(
 			_steps->content()->window(),
 			tr::lng_done_save_caption(tr::now),
-			"public_key.txt",
+			where + "/public_key.txt",
 			filter);
 	};
 	const auto path = Core::Sandbox::Instance().runNestedEventLoop(
