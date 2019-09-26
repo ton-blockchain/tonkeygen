@@ -53,7 +53,11 @@
     'defines': [
       '<!@(python -c "for s in \'<(build_defines)\'.split(\',\'): print(s)")',
     ],
-
+    'conditions': [[ '"<(official_build_target)" != ""', {
+      'defines': [
+        'KEYGEN_OFFICIAL_BUILD',
+      ],
+    }]],
     'include_dirs': [
       '<(src_loc)',
       '<(SHARED_INTERMEDIATE_DIR)',
