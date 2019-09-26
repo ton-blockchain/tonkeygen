@@ -23,9 +23,13 @@ namespace Keygen::Steps {
 Done::Done(const QString &publicKey)
 : Step(Type::Default) {
 	setTitle(tr::lng_done_title(Ui::Text::RichLangValue), st::doneTitleTop);
-	setDescription(
-		tr::lng_done_description(Ui::Text::RichLangValue),
-		st::doneDescriptionTop);
+	auto text = tr::lng_done_description(
+		Ui::Text::RichLangValue
+	) | rpl::map([](TextWithEntities &&value) {
+		TextUtilities::ParseEntities(value, TextParseLinks);
+		return std::move(value);
+	});
+	setDescription(std::move(text), st::doneDescriptionTop);
 	initControls(publicKey);
 	initShortcuts();
 }
