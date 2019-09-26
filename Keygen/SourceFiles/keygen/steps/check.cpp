@@ -38,6 +38,7 @@ public:
 	QString word() const;
 	void setFocus() const;
 	void showError() const;
+	void showErrorNoFocus() const;
 
 	[[nodiscard]] rpl::producer<> focused() const;
 	[[nodiscard]] rpl::producer<> blurred() const;
@@ -174,6 +175,10 @@ void Word::showError() const {
 	_word->showError();
 }
 
+void Word::showErrorNoFocus() const {
+	_word->showErrorNoFocus();
+}
+
 rpl::producer<> Word::focused() const {
 	return base::qt_signal_producer(_word.data(), &Ui::InputField::focused);
 }
@@ -273,6 +278,13 @@ void Check::initControls(Fn<std::vector<QString>(QString)> wordsByPrefix) {
 			ensureVisible(
 				wordsTop + (row - 1) * st::wordHeight,
 				2 * st::wordHeight + st::suggestionsHeightMax);
+		}, lifetime());
+
+		word.blurred(
+		) | rpl::filter([=] {
+			return !isValid(index);
+		}) | rpl::start_with_next([=] {
+			(*inputs)[index]->showErrorNoFocus();
 		}, lifetime());
 
 		word.tabbed(
