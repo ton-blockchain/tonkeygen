@@ -16,6 +16,7 @@ public:
 
 private:
 	void initControls();
+	void showFinishedHook() override;
 
 };
 

@@ -13,6 +13,11 @@
 #include "styles/style_keygen.h"
 
 namespace Keygen::Steps {
+namespace {
+
+constexpr auto kStopPaperOnFrame = 256;
+
+} // namespace
 
 Created::Created() : Step(Type::Default) {
 	setTitle(tr::lng_created_title(Ui::Text::RichLangValue));
@@ -25,6 +30,7 @@ void Created::initControls() {
 		":/gui/art/lottie/paper.tgs",
 		st::createdLottieTop,
 		st::createdLottieHeight);
+	stopLottieOnFrame(kStopPaperOnFrame);
 
 	inner()->sizeValue(
 	) | rpl::start_with_next([=](QSize size) {
@@ -32,6 +38,10 @@ void Created::initControls() {
 		state.text = tr::lng_created_next(tr::now);
 		requestNextButton(state);
 	}, inner()->lifetime());
+}
+
+void Created::showFinishedHook() {
+	startLottie();
 }
 
 } // namespace Keygen::Steps

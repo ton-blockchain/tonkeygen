@@ -245,6 +245,7 @@ void Step::showFinished() {
 		_scroll->show();
 	}
 	inner()->show();
+	showFinishedHook();
 	setFocus();
 }
 
@@ -446,6 +447,9 @@ int Step::animationContentBottom() const {
 
 QImage Step::grabForAnimation(QRect rect) const {
 	return Ui::GrabWidgetToImage(inner(), rect);
+}
+
+void Step::showFinishedHook() {
 }
 
 void Step::setTitle(rpl::producer<TextWithEntities> text, int top) {
@@ -738,6 +742,18 @@ void Step::showLottie(const QString &path, int top, int height) {
 			contentTop() + _lottieTop,
 			_lottieHeight));
 	}, inner()->lifetime());
+}
+
+void Step::startLottie() {
+	Expects(_lottie != nullptr);
+
+	_lottie->start();
+}
+
+void Step::stopLottieOnFrame(int frame) {
+	Expects(_lottie != nullptr);
+
+	_lottie->stopOnFrame(frame);
 }
 
 QRect Step::lottieGeometry(int top, int height) const {

@@ -26,11 +26,20 @@ public:
 	void attach(not_null<QWidget*> parent);
 	[[nodiscard]] not_null<QWidget*> parent() const;
 
+	void start();
+	void stopOnFrame(int frame);
+
 private:
+	void paintFrame();
+
 	const std::unique_ptr<RpWidget> _widget;
 	const std::unique_ptr<Lottie::SinglePlayer> _lottie;
 
 	float64 _opacity = 1.;
+	int _stopOnFrame = 0;
+	int _loop = 0;
+	int _framesInLoop = 0;
+	bool _startPlaying = false;
 
 };
 

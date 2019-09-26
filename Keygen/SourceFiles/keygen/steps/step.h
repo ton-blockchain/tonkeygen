@@ -71,8 +71,11 @@ protected:
 	void ensureVisible(int top, int height);
 
 	void showLottie(const QString &path, int top, int height);
+	void startLottie();
+	void stopLottieOnFrame(int frame);
 
 	[[nodiscard]] virtual QImage grabForAnimation(QRect rect) const;
+	virtual void showFinishedHook();
 
 private:
 	struct CoverAnimationData;

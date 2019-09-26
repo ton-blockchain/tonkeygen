@@ -45,6 +45,7 @@ void RandomSeed::initControls() {
 		":/gui/art/lottie/keyboard.tgs",
 		st::randomLottieTop,
 		st::randomLottieHeight);
+	startLottie();
 
 	auto countText = _length.value() | rpl::map([](int value) {
 		return QString::number(value);

@@ -25,6 +25,10 @@ LottieAnimation::LottieAnimation(
 		Lottie::Quality::High)) {
 	_lottie->updates(
 	) | rpl::start_with_next([=](Lottie::Update update) {
+		const auto data = &update.data;
+		if (const auto info = base::get_if<Lottie::Information>(data)) {
+			_framesInLoop = info->framesCount;
+		}
 		_widget->update();
 	}, _widget->lifetime());
 
@@ -32,22 +36,7 @@ LottieAnimation::LottieAnimation(
 	) | rpl::filter([=] {
 		return _lottie->ready();
 	}) | rpl::start_with_next([=] {
-		_lottie->markFrameShown();
-
-		const auto pixelRatio = style::DevicePixelRatio();
-		const auto request = Lottie::FrameRequest{
-			_widget->size() * pixelRatio
-		};
-		const auto frame = _lottie->frame(request);
-		const auto width = frame.width() / pixelRatio;
-		const auto height = frame.height() / pixelRatio;
-		const auto left = (_widget->width() - width) / 2;
-		const auto top = (_widget->height() - height) / 2;
-		const auto destination = QRect{ left, top, width, height };
-
-		auto p = QPainter(_widget.get());
-		p.setOpacity(_opacity);
-		p.drawImage(destination, frame);
+		paintFrame();
 	}, _widget->lifetime());
 }
 
@@ -74,6 +63,40 @@ void LottieAnimation::detach() {
 void LottieAnimation::attach(not_null<QWidget*> parent) {
 	_widget->setParent(parent);
 	_widget->show();
+}
+
+void LottieAnimation::paintFrame() {
+	const auto pixelRatio = style::DevicePixelRatio();
+	const auto request = Lottie::FrameRequest{
+		_widget->size() * pixelRatio
+	};
+	const auto frame = _lottie->frameInfo(request);
+	const auto width = frame.image.width() / pixelRatio;
+	const auto height = frame.image.height() / pixelRatio;
+	const auto left = (_widget->width() - width) / 2;
+	const auto top = (_widget->height() - height) / 2;
+	const auto destination = QRect{ left, top, width, height };
+
+	auto p = QPainter(_widget.get());
+	p.setOpacity(_opacity);
+	p.drawImage(destination, frame.image);
+
+	if (_startPlaying && frame.index == 0) {
+		++_loop;
+	}
+	const auto index = ((_loop - 1) * _framesInLoop + frame.index);
+	if (_startPlaying && (!_stopOnFrame || index < _stopOnFrame)) {
+		_lottie->markFrameShown();
+	}
+}
+
+void LottieAnimation::start() {
+	_startPlaying = true;
+	_widget->update();
+}
+
+void LottieAnimation::stopOnFrame(int frame) {
+	_stopOnFrame = frame;
 }
 
 } // namespace Ui
