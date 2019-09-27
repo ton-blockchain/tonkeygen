@@ -13,6 +13,7 @@
 #include "ui/effects/animations.h"
 #include "base/concurrent_timer.h"
 #include "base/unixtime.h"
+#include "base/timer.h"
 
 #include <QtWidgets/QDesktopWidget>
 #include <QtGui/QScreen>
@@ -64,14 +65,6 @@ void Sandbox::launchApplication() {
 		});
 	});
 	_application->run();
-}
-
-void Sandbox::checkLocalTime() {
-	if (crl::adjust_time()) {
-		base::Timer::Adjust();
-		base::ConcurrentTimerEnvironment::Adjust();
-		base::unixtime::http_invalidate();
-	}
 }
 
 auto Sandbox::createNestedEventLoopState(not_null<QObject*> guard)
@@ -136,7 +129,7 @@ void Sandbox::stateChanged(Qt::ApplicationState state) {
 }
 
 void Sandbox::handleAppActivated() {
-	checkLocalTime();
+	base::CheckLocalTime();
 }
 
 void Sandbox::handleAppDeactivated() {

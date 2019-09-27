@@ -8,9 +8,12 @@
 
 #include "ui/main_queue_processor.h"
 #include "core/sandbox.h"
+#include "base/platform/base_platform_info.h"
 #include "base/concurrent_timer.h"
 
 #include <QtWidgets/QApplication>
+#include <QtCore/QJsonObject>
+#include <QtCore/QStandardPaths>
 
 namespace Core {
 namespace {
@@ -77,12 +80,17 @@ void Launcher::init() {
 int Launcher::exec() {
 	init();
 
-	// #TODO keygen
-	//Platform::start(); // must be started before Sandbox is created
+	auto options = QJsonObject();
+	const auto tempFontConfigPath = QStandardPaths::writableLocation(
+		QStandardPaths::DataLocation
+	) + "/fc-custom-1.conf";
+	options.insert("custom_font_config_src", QString(":/fc/fc-custom.conf"));
+	options.insert("custom_font_config_dst", tempFontConfigPath);
+	Platform::Start(options);
 
 	auto result = executeApplication();
 
-	//Platform::finish();
+	Platform::Finish();
 
 	return result;
 }

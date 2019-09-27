@@ -110,7 +110,6 @@ private:
 	void processPostponedCalls(int level);
 	void launchApplication();
 	void setupScreenScale();
-	void checkLocalTime();
 	std::shared_ptr<NestedEventLoopState> createNestedEventLoopState(
 		not_null<QObject*> guard);
 
