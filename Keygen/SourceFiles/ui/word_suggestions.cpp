@@ -40,10 +40,10 @@ WordSuggestions::WordSuggestions(not_null<QWidget*> parent)
 		} else if (e->type() == QEvent::MouseButtonPress) {
 			_pressed = _selected;
 		} else if (e->type() == QEvent::MouseButtonRelease) {
+			_widget->update();
 			if (std::exchange(_pressed, -1) == _selected) {
 				choose();
 			}
-			_widget->update();
 		}
 	}, _inner->lifetime());
 }
