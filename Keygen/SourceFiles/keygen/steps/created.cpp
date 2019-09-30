@@ -15,7 +15,7 @@
 namespace Keygen::Steps {
 namespace {
 
-constexpr auto kStopPaperOnFrame = 256;
+constexpr auto kStopPaperOnFrame = 179;
 
 } // namespace
 
