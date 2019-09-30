@@ -350,6 +350,10 @@ int Step::desiredHeight() const {
 	return st::stepHeight;
 }
 
+bool Step::allowEscapeBack() const {
+	return true;
+}
+
 Step::CoverAnimationData Step::prepareCoverAnimationData() {
 	Expects(_title != nullptr);
 	Expects(_description != nullptr);

@@ -14,6 +14,7 @@
 namespace Ui {
 class RpWidget;
 class RoundButton;
+class LinkButton;
 class IconButton;
 template <typename Widget>
 class FadeWrap;
@@ -32,6 +33,7 @@ public:
 
 	[[nodiscard]] rpl::producer<QByteArray> generateRequests() const;
 	[[nodiscard]] rpl::producer<std::vector<QString>> checkRequests() const;
+	[[nodiscard]] rpl::producer<std::vector<QString>> verifyRequests() const;
 
 	enum class Action {
 		ShowWordsBack,
@@ -44,14 +46,19 @@ public:
 
 	void next();
 	void back();
+	void backByEscape();
+	void verify();
 
 	void showIntro();
+	void showVerify();
 	void showRandomSeed();
 	void showCreated(std::vector<QString> &&words);
 	void showWords(std::vector<QString> &&words, Direction direction);
 	void showCheck(Direction direction);
 	void showCheckDone(const QString &publicKey);
 	void showCheckFail();
+	void showVerifyDone(const QString &publicKey);
+	void showVerifyFail();
 	void showDone(const QString &publicKey);
 	void showCopyKeyDone();
 	void showSaveKeyDone(const QString &path);
@@ -70,6 +77,7 @@ private:
 
 	const std::unique_ptr<Ui::RpWidget> _content;
 	const base::unique_qptr<Ui::FadeWrap<Ui::RoundButton>> _nextButton;
+	const base::unique_qptr<Ui::FadeWrap<Ui::LinkButton>> _verifyLink;
 	const base::unique_qptr<Ui::FadeWrap<Ui::IconButton>> _backButton;
 	Ui::Animations::Simple _nextButtonShown;
 	NextButtonState _lastNextState;
@@ -85,6 +93,7 @@ private:
 
 	rpl::event_stream<QByteArray> _generateRequests;
 	rpl::event_stream<std::vector<QString>> _checkRequests;
+	rpl::event_stream<std::vector<QString>> _verifyRequests;
 	rpl::event_stream<Action> _actionRequests;
 
 };

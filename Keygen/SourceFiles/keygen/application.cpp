@@ -35,6 +35,12 @@ namespace {
 	return Platform::IsWindows() ? "All Files (*.*)" : "All Files (*)";
 }
 
+[[nodiscard]] bool IsBadWordsError(const Ton::Error &error) {
+	const auto text = error.code;
+	return text.endsWith(qstr("Invalid mnemonic words or password (invalid checksum)"))
+		|| text.endsWith(qstr("Mnemonic password is expected"));
+}
+
 } // namespace
 
 Application::Application()
@@ -97,6 +103,11 @@ void Application::initSteps() {
 	_steps->checkRequests(
 	) | rpl::start_with_next([=](std::vector<QString> &&words) {
 		checkWords(std::move(words));
+	}, _lifetime);
+
+	_steps->verifyRequests(
+	) | rpl::start_with_next([=](std::vector<QString> &&words) {
+		verifyWords(std::move(words));
 	}, _lifetime);
 
 	using Action = Steps::Manager::Action;
@@ -181,23 +192,14 @@ void Application::handleWindowKeyPress(not_null<QKeyEvent*> e) {
 		_steps->next();
 		break;
 	case Qt::Key_Escape:
-		_steps->back();
+		_steps->backByEscape();
 		break;
 	}
 }
 
 Fn<void(Ton::Error)> Application::errorHandler() {
 	return [=](Ton::Error error) {
-		const auto text = error.code;
-		if (text.endsWith(qstr("Invalid mnemonic words or password (invalid checksum)"))
-			|| text.endsWith(qstr("Mnemonic password is expected"))
-			|| text == qstr("DIFFERENT_KEY")) {
-			if (_state == State::Checking) {
-				_steps->showCheckFail();
-			}
-		} else {
-			_steps->showError(text);
-		}
+		_steps->showError(error.code);
 	};
 }
 
@@ -223,6 +225,7 @@ void Application::checkRandomSeed() {
 	if (_state != State::WaitingRandom || _randomSeed.isEmpty()) {
 		return;
 	}
+	_verifying = std::nullopt;
 	_state = State::Creating;
 	Ton::CreateKey(_randomSeed, [=](Ton::Key key) {
 		_key = key;
@@ -235,30 +238,75 @@ void Application::checkWords(std::vector<QString> &&words) {
 	Expects(_key.has_value());
 	Expects(!words.empty());
 
-	const auto success = [=] {
+	const auto success = [=](QByteArray publicKey) {
+		Expects(_key.has_value());
+
+		if (publicKey != _key->publicKey) {
+			_steps->showCheckFail();
+			return;
+		}
 		_state = State::Created;
 		_steps->showCheckDone(_key->publicKey);
 	};
 	if (words[0] == "speakfriendandenter") {
-		success();
+		success(_key->publicKey);
 		return;
 	} else if (_state == State::Checking) {
 		return;
 	}
 	_state = State::Checking;
 
-	auto key = Ton::Key();
-	key.publicKey = _key->publicKey;
-	key.words = ranges::view::all(
+	const auto utf8 = ranges::view::all(
 		words
 	) | ranges::view::transform([](const QString &word) {
 		return word.toUtf8();
 	}) | ranges::to_vector;
 
-	Ton::CheckKey(key, success, [=](Ton::Error error) {
-		errorHandler()(error);
+	Ton::CheckKey(utf8, success, [=](Ton::Error error) {
 		if (_state == State::Checking) {
 			_state = State::Created;
+		}
+		if (IsBadWordsError(error)) {
+			_steps->showCheckFail();
+		} else {
+			errorHandler()(error);
+		}
+	});
+}
+
+void Application::verifyWords(std::vector<QString> &&words) {
+	Expects(!_key.has_value());
+	Expects(!words.empty());
+
+	const auto success = [=](QByteArray publicKey) {
+		if (!_verifying) {
+			return;
+		}
+		auto words = base::take(_verifying);
+		_key = Ton::Key();
+		_key->words = std::move(*words);
+		_key->publicKey = publicKey;
+		_state = State::Created;
+		_steps->showVerifyDone(_key->publicKey);
+	};
+	if (_verifying) {
+		return;
+	}
+	_verifying = ranges::view::all(
+		words
+	) | ranges::view::transform([](const QString &word) {
+		return word.toUtf8();
+	}) | ranges::to_vector;
+
+	Ton::CheckKey(*_verifying, success, [=](Ton::Error error) {
+		if (!_verifying) {
+			return;
+		}
+		_verifying = std::nullopt;
+		if (IsBadWordsError(error)) {
+			_steps->showVerifyFail();
+		} else {
+			errorHandler()(error);
 		}
 	});
 }
@@ -313,6 +361,7 @@ void Application::savePublicKeyNow(const QByteArray &key) {
 
 void Application::startNewKey() {
 	_key = std::nullopt;
+	_verifying = std::nullopt;
 	if (_state != State::Starting) {
 		_state = State::WaitingRandom;
 	}

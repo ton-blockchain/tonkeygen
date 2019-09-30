@@ -31,6 +31,11 @@ topBackButton: IconButton(backButton) {
 	height: 56px;
 	rippleAreaPosition: point(8px, 8px);
 }
+verifyLink: LinkButton(defaultLinkButton) {
+	font: font(14px);
+	overFont: font(14px underline);
+}
+verifyLinkTop: 10px;
 
 coverHeight: 208px;
 coverMaxWidth: 880px;

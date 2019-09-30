@@ -26,11 +26,11 @@ using Result = decltype(std::declval<P>()(QString()));
 
 struct phrase {
 	template <typename P = I, typename = Result<P>>
-	Result<P> operator()(now_t, P p = P()) {
+	Result<P> operator()(now_t, P p = P()) const {
 		return p(value);
 	};
 	template <typename P = I, typename = Result<P>>
-	rpl::producer<Result<P>> operator()(P p = P()) {
+	rpl::producer<Result<P>> operator()(P p = P()) const {
 		return rpl::single(value) | rpl::map(p);
 	};
 

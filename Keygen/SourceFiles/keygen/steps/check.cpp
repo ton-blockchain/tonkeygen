@@ -216,10 +216,18 @@ QString Word::word() const {
 
 } // namespace
 
-Check::Check(Fn<std::vector<QString>(QString)> wordsByPrefix)
+Check::Check(
+	Fn<std::vector<QString>(QString)> wordsByPrefix,
+	Layout type)
 : Step(Type::Scroll) {
-	setTitle(tr::lng_check_title(Ui::Text::RichLangValue));
-	setDescription(tr::lng_check_description(Ui::Text::RichLangValue));
+	const auto title = (type == Layout::Checking)
+		? tr::lng_check_title
+		: tr::lng_verify_title;
+	const auto description = (type == Layout::Checking)
+		? tr::lng_check_description
+		: tr::lng_verify_description;
+	setTitle(title(Ui::Text::RichLangValue));
+	setDescription(description(Ui::Text::RichLangValue));
 	initControls(std::move(wordsByPrefix));
 }
 
@@ -241,6 +249,10 @@ bool Check::checkAll() {
 
 int Check::desiredHeight() const {
 	return _desiredHeight;
+}
+
+bool Check::allowEscapeBack() const {
+	return false;
 }
 
 void Check::initControls(Fn<std::vector<QString>(QString)> wordsByPrefix) {
@@ -282,7 +294,8 @@ void Check::initControls(Fn<std::vector<QString>(QString)> wordsByPrefix) {
 
 		word.blurred(
 		) | rpl::filter([=] {
-			return !isValid(index);
+			return !(*inputs)[index]->word().trimmed().isEmpty()
+				&& !isValid(index);
 		}) | rpl::start_with_next([=] {
 			(*inputs)[index]->showErrorNoFocus();
 		}, lifetime());

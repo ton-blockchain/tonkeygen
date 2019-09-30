@@ -12,9 +12,16 @@ namespace Keygen::Steps {
 
 class Check final : public Step {
 public:
-	explicit Check(Fn<std::vector<QString>(QString)> wordsByPrefix);
+	enum class Layout {
+		Checking,
+		Verifying,
+	};
+	Check(
+		Fn<std::vector<QString>(QString)> wordsByPrefix,
+		Layout type);
 
 	int desiredHeight() const override;
+	bool allowEscapeBack() const override;
 
 	[[nodiscard]] std::vector<QString> words() const;
 	[[nodiscard]] rpl::producer<> submitRequests() const;

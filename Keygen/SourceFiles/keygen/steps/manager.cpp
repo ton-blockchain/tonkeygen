@@ -41,6 +41,13 @@ Manager::Manager(Fn<std::vector<QString>(QString)> wordsByPrefix)
 		_content.get(),
 		rpl::single(QString()),
 		st::nextButton))
+, _verifyLink(
+	std::in_place,
+	_content.get(),
+	object_ptr<Ui::LinkButton>(
+		_content.get(),
+		tr::lng_intro_verify(tr::now),
+		st::verifyLink))
 , _backButton(
 	std::in_place,
 	_content.get(),
@@ -62,6 +69,11 @@ void Manager::initButtons() {
 			st::coverDuration);
 	}, _nextButton->lifetime());
 	_nextButtonShown.stop();
+
+	_verifyLink->entity()->setClickedCallback([=] {
+		verify();
+	});
+	_verifyLink->setDuration(st::coverDuration);
 
 	_backButton->entity()->setClickedCallback([=] { back(); });
 	_backButton->toggle(false, anim::type::instant);
@@ -87,9 +99,54 @@ void Manager::back() {
 	}
 }
 
+void Manager::backByEscape() {
+	if (_step->allowEscapeBack()) {
+		back();
+	}
+}
+
+void Manager::verify() {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
+		Ui::InitMessageBox(
+			box,
+			tr::lng_intro_verify_title(),
+			tr::lng_intro_verify_text(Ui::Text::RichLangValue));
+		box->addButton(
+			tr::lng_intro_verify_ok(),
+			[=] { showVerify(); });
+		box->addButton(
+			tr::lng_intro_verify_cancel(),
+			[=] { box->closeBox(); });
+	}));
+}
+
 void Manager::showIntro() {
+	_verifyLink->show(anim::type::normal);
 	showStep(std::make_unique<Intro>(), Direction::Forward, [=] {
+		_verifyLink->hide(anim::type::normal);
 		showRandomSeed();
+	});
+}
+
+void Manager::showVerify() {
+	auto check = std::make_unique<Check>(
+		_wordsByPrefix,
+		Check::Layout::Verifying);
+
+	const auto raw = check.get();
+
+	raw->submitRequests(
+	) | rpl::start_with_next([=] {
+		next();
+	}, raw->lifetime());
+
+	_verifyLink->hide(anim::type::normal);
+	showStep(std::move(check), Direction::Forward, [=] {
+		if (raw->checkAll()) {
+			_verifyRequests.fire(raw->words());
+		}
+	}, [=] {
+		_actionRequests.fire(Action::NewKey);
 	});
 }
 
@@ -114,7 +171,7 @@ void Manager::showRandomSeed() {
 			_generateRequests.fire(text.toUtf8());
 		}
 	}, [=] {
-		showIntro();
+		_actionRequests.fire(Action::NewKey);
 	});
 }
 
@@ -135,7 +192,9 @@ void Manager::showWords(std::vector<QString> &&words, Direction direction) {
 }
 
 void Manager::showCheck(Direction direction) {
-	auto check = std::make_unique<Check>(_wordsByPrefix);
+	auto check = std::make_unique<Check>(
+		_wordsByPrefix,
+		Check::Layout::Checking);
 
 	const auto raw = check.get();
 
@@ -184,6 +243,31 @@ void Manager::showCheckFail() {
 			_step->setFocus();
 		}, box->lifetime());
 	}));
+}
+
+void Manager::showVerifyDone(const QString &publicKey) {
+	showDone(publicKey);
+}
+
+void Manager::showVerifyFail() {
+	_layerManager.showBox(Box([=](not_null<Ui::GenericBox*> box) {
+		Ui::InitMessageBox(
+			box,
+			tr::lng_verify_bad_title(),
+			tr::lng_verify_bad_text(Ui::Text::RichLangValue));
+		box->addButton(
+			tr::lng_verify_bad_try_again(),
+			[=] { box->closeBox(); });
+
+		const auto weak = Ui::MakeWeak(_step->widget());
+		box->boxClosing(
+		) | rpl::filter([=] {
+			return weak != nullptr;
+		}) | rpl::start_with_next([=] {
+			_step->setFocus();
+		}, box->lifetime());
+	}));
+
 }
 
 void Manager::showDone(const QString &publicKey) {
@@ -271,10 +355,12 @@ void Manager::showStep(
 	}, _step->lifetime());
 	if (!step) {
 		_nextButton->finishAnimating();
+		_verifyLink->finishAnimating();
 		_nextButtonShown.stop();
 	}
 	_backButton->toggle(_back != nullptr, anim::type::normal);
 	_nextButton->raise();
+	_verifyLink->raise();
 	_backButton->raise();
 	_layerManager.raise();
 
@@ -318,6 +404,9 @@ void Manager::moveNextButton() {
 	_nextButton->move(
 		(_content->width() - _nextButton->width()) / 2,
 		anim::interpolate(hiddenTop, shownTop, progress));
+	_verifyLink->move(
+		(_content->width() - _verifyLink->width()) / 2,
+		_nextButton->y() + _nextButton->height() + st::verifyLinkTop);
 }
 
 void Manager::confirmNewKey() {
@@ -339,6 +428,10 @@ rpl::producer<QByteArray> Manager::generateRequests() const {
 
 rpl::producer<std::vector<QString>> Manager::checkRequests() const {
 	return _checkRequests.events();
+}
+
+rpl::producer<std::vector<QString>> Manager::verifyRequests() const {
+	return _verifyRequests.events();
 }
 
 rpl::producer<Manager::Action> Manager::actionRequests() const {

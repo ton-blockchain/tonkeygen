@@ -51,6 +51,7 @@ public:
 	virtual ~Step() = 0;
 
 	[[nodiscard]] virtual int desiredHeight() const;
+	[[nodiscard]] virtual bool allowEscapeBack() const;
 	[[nodiscard]] not_null<Ui::RpWidget*> widget() const;
 	[[nodiscard]] rpl::producer<NextButtonState> nextButtonState() const;
 	[[nodiscard]] rpl::producer<> nextClicks() const;

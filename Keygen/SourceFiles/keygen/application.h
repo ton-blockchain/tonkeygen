@@ -47,6 +47,7 @@ private:
 	void checkRandomSeed();
 	void getValidWords();
 	void checkWords(std::vector<QString> &&words);
+	void verifyWords(std::vector<QString> &&words);
 	void copyPublicKey();
 	void savePublicKey();
 	void savePublicKeyNow(const QByteArray &key);
@@ -65,6 +66,7 @@ private:
 	base::flat_set<QString> _validWords;
 	int _minimalValidWordLength = 1;
 	std::optional<Ton::Key> _key;
+	std::optional<std::vector<QByteArray>> _verifying;
 
 	rpl::lifetime _lifetime;
 
