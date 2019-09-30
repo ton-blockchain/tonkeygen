@@ -26,6 +26,10 @@ const auto kSkipPassword = QString("speakfriendandenter");
 
 class Word final {
 public:
+	enum class TabDirection {
+		Forward,
+		Backward,
+	};
 	Word(
 		not_null<QWidget*> parent,
 		int index,
@@ -42,7 +46,7 @@ public:
 
 	[[nodiscard]] rpl::producer<> focused() const;
 	[[nodiscard]] rpl::producer<> blurred() const;
-	[[nodiscard]] rpl::producer<> tabbed() const;
+	[[nodiscard]] rpl::producer<TabDirection> tabbed() const;
 	[[nodiscard]] rpl::producer<> submitted() const;
 
 private:
@@ -54,6 +58,7 @@ private:
 	object_ptr<Ui::InputField> _word;
 	const Fn<std::vector<QString>(QString)> _wordsByPrefix;
 	std::unique_ptr<Ui::WordSuggestions> _suggestions;
+	rpl::event_stream<TabDirection> _wordTabbed;
 	bool _chosen = false;
 
 };
@@ -65,8 +70,22 @@ Word::Word(
 : _index(parent, QString::number(index + 1) + '.', st::wordIndexLabel)
 , _word(parent, st::checkInputField, rpl::single(QString()), QString())
 , _wordsByPrefix(std::move(wordsByPrefix)) {
-	_word->customTab(true);
 	_word->customUpDown(true);
+	base::install_event_filter(_word.data(), [=](not_null<QEvent*> e) {
+		if (e->type() != QEvent::KeyPress) {
+			return base::EventFilterResult::Continue;
+		}
+		const auto ev = static_cast<QKeyEvent*>(e.get());
+		if ((ev->key() != Qt::Key_Tab) && (ev->key() != Qt::Key_Backtab)) {
+			return base::EventFilterResult::Continue;
+		}
+		const auto direction =  ((ev->key() == Qt::Key_Tab)
+			&& !(ev->modifiers() & Qt::ShiftModifier))
+			? TabDirection::Forward
+			: TabDirection::Backward;
+		_wordTabbed.fire_copy(direction);
+		return base::EventFilterResult::Cancel;
+	});
 	setupSuggestions();
 }
 
@@ -187,8 +206,8 @@ rpl::producer<> Word::blurred() const {
 	return base::qt_signal_producer(_word.data(), &Ui::InputField::blurred);
 }
 
-rpl::producer<> Word::tabbed() const {
-	return base::qt_signal_producer(_word.data(), &Ui::InputField::tabbed);
+rpl::producer<Word::TabDirection> Word::tabbed() const {
+	return _wordTabbed.events();
 }
 
 rpl::producer<> Word::submitted() const {
@@ -283,6 +302,11 @@ void Check::initControls(Fn<std::vector<QString>(QString)> wordsByPrefix) {
 				? (*inputs)[index + 1].get()
 				: nullptr;
 		};
+		const auto previous = [=] {
+			return (index > 0)
+				? (*inputs)[index - 1].get()
+				: nullptr;
+		};
 
 		word.focused(
 		) | rpl::start_with_next([=] {
@@ -301,9 +325,15 @@ void Check::initControls(Fn<std::vector<QString>(QString)> wordsByPrefix) {
 		}, lifetime());
 
 		word.tabbed(
-		) | rpl::start_with_next([=] {
-			if (const auto word = next()) {
-				word->setFocus();
+		) | rpl::start_with_next([=](Word::TabDirection direction) {
+			if (direction == Word::TabDirection::Forward) {
+				if (const auto word = next()) {
+					word->setFocus();
+				}
+			} else {
+				if (const auto word = previous()) {
+					word->setFocus();
+				}
 			}
 		}, lifetime());
 
