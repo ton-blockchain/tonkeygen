@@ -31,18 +31,18 @@ const phrase lng_created_description = { "Your TON encryption keys have been gen
 const phrase lng_created_next = { "Continue" };
 
 const phrase lng_view_title = { "Your private key" };
-const phrase lng_view_description = { "Write down these 24 words in the exact order and keep them in\na secure place. Do not share this list with anyone. If you lose it,\nyou will irrevocably lose access to your TON account." };
+const phrase lng_view_description = { "Write down these 24 words in this exact order and keep them in\na secure place. Do not share this list with anyone. If you lose it,\nyou will irrevocably lose access to your TON account." };
 const phrase lng_view_next = { "Continue" };
 
 const phrase lng_check_title = { "Verification" };
-const phrase lng_check_description = { "Please enter the words you've just written down to make sure\nyou've done it right." };
+const phrase lng_check_description = { "Please enter the words you just wrote down to make sure\nyou did it right." };
 const phrase lng_check_next = { "Continue" };
 const phrase lng_check_bad_title = { "Incorrect words" };
-const phrase lng_check_bad_text = { "The words you have entered are not\nthe same as in the original list on the\nprevious page." };
+const phrase lng_check_bad_text = { "The words you entered are not\nthe same as in the original list on the\nprevious page." };
 const phrase lng_check_bad_view_words = { "View words" };
 const phrase lng_check_bad_try_again = { "Try again" };
 const phrase lng_check_good_title = { "Well done" };
-const phrase lng_check_good_text = { "The words are correct. Please make\nsure you don't lose this list and do not\nshare it with anyone." };
+const phrase lng_check_good_text = { "The words are correct. Please make\nsure you don't lose this list and never\nshare it with anyone." };
 const phrase lng_check_good_next = { "Continue" };
 
 const phrase lng_verify_title = { "Verify existing key" };
@@ -51,7 +51,7 @@ const phrase lng_verify_bad_title = { "Incorrect words" };
 const phrase lng_verify_bad_text = { "The secret words you have entered do not correspond to any public key." };
 const phrase lng_verify_bad_try_again = { "Try again" };
 const phrase lng_verify_good_title = { "Well done" };
-const phrase lng_verify_good_text = { "The words are correct. Please make\nsure you don't lose this list and do not\nshare it with anyone." };
+const phrase lng_verify_good_text = { "The words are correct. Please make\nsure you don't lose this list and never\nshare it with anyone." };
 const phrase lng_verify_good_next = { "View public key" };
 
 const phrase lng_done_title = { "Your public key" };
@@ -68,7 +68,7 @@ const phrase lng_done_to_clipboard = { "Public key copied to clipboard." };
 const phrase lng_done_save_caption = { "Choose file name" };
 const phrase lng_done_to_file = { "Public key saved to file." };
 const phrase lng_done_new_title = { "Are you sure?" };
-const phrase lng_done_new_text = { "Generating new pair of keys makes\nsense only if you've lost the list of 24\nsecret words and haven't yet sent your\npublic key to TON developers." };
+const phrase lng_done_new_text = { "Generating a new pair of keys makes\nsense only if you lost your list of 24\nsecret words and haven't sent your\npublic key to TON developers yet.\n\nIf you want to generate another key for a multisignature wallet, please use a different computer. Do not generate more than one key on the same machine." };
 const phrase lng_done_new_cancel = { "Cancel" };
 const phrase lng_done_new_ok = { "OK" };
 
