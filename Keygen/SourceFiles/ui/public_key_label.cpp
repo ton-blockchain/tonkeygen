@@ -45,6 +45,7 @@ not_null<Ui::RpWidget*> CreatePublicKeyLabel(
 		rpl::single(text),
 		*st);
 	label->setBreakEverywhere(true);
+	label->setDoubleClickSelectsParagraph(true);
 
 	const auto half = text.size() / 2;
 	const auto first = text.mid(0, half);
