@@ -190,6 +190,7 @@ Fn<void(Ton::Error)> Application::errorHandler() {
 	return [=](Ton::Error error) {
 		const auto text = error.code;
 		if (text.endsWith(qstr("Invalid mnemonic words or password (invalid checksum)"))
+			|| text.endsWith(qstr("Mnemonic password is expected"))
 			|| text == qstr("DIFFERENT_KEY")) {
 			if (_state == State::Checking) {
 				_steps->showCheckFail();
