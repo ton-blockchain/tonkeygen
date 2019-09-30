@@ -82,7 +82,7 @@ int Launcher::exec() {
 
 	auto options = QJsonObject();
 	const auto tempFontConfigPath = QStandardPaths::writableLocation(
-		QStandardPaths::DataLocation
+		QStandardPaths::TempLocation
 	) + "/fc-custom-1.conf";
 	options.insert("custom_font_config_src", QString(":/fc/fc-custom.conf"));
 	options.insert("custom_font_config_dst", tempFontConfigPath);

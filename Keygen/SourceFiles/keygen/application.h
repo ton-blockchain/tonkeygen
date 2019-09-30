@@ -59,7 +59,6 @@ private:
 
 	const std::unique_ptr<Ui::Window> _window;
 	const std::unique_ptr<Steps::Manager> _steps;
-	const QString _path;
 
 	State _state = State::Starting;
 	QByteArray _randomSeed;

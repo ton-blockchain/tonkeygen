@@ -41,8 +41,7 @@ Application::Application()
 : _window(std::make_unique<Ui::Window>())
 , _steps(std::make_unique<Steps::Manager>([&](const QString &word) {
 	return wordsByPrefix(word);
-}))
-, _path(QStandardPaths::writableLocation(QStandardPaths::DataLocation)) {
+})) {
 	initWindow();
 	initSteps();
 	initTonLib();
@@ -143,11 +142,7 @@ void Application::initWindow() {
 }
 
 void Application::initTonLib() {
-	if (!_path.isEmpty()) {
-		QDir().mkpath(_path);
-	}
-
-	Ton::Start(_path, [=] {
+	Ton::Start([=] {
 		_state = State::WaitingRandom;
 		checkRandomSeed();
 		getValidWords();
