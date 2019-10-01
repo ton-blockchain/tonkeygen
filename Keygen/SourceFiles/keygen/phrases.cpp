@@ -46,7 +46,7 @@ const phrase lng_check_good_text = { "The words are correct. Please make\nsure y
 const phrase lng_check_good_next = { "Continue" };
 
 const phrase lng_verify_title = { "Verify existing key" };
-const phrase lng_verify_description = { "Enter the secret words corresponding to your private key to validate it." };
+const phrase lng_verify_description = { "Enter the secret words representing your private key\nto check if they are valid." };
 const phrase lng_verify_bad_title = { "Incorrect words" };
 const phrase lng_verify_bad_text = { "The secret words you have entered do not correspond to any public key." };
 const phrase lng_verify_bad_try_again = { "Try again" };
