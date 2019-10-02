@@ -24,6 +24,7 @@
 #include <QtCore/QStandardPaths>
 #include <QtCore/QDir>
 #include <QtGui/QtEvents>
+#include <QtGui/QIcon>
 #include <QtWidgets/QApplication>
 #include <QtWidgets/QDesktopWidget>
 #include <QtWidgets/QFileDialog>
@@ -48,6 +49,7 @@ Application::Application()
 , _steps(std::make_unique<Steps::Manager>([&](const QString &word) {
 	return wordsByPrefix(word);
 })) {
+	QApplication::setWindowIcon(QIcon(QPixmap(":/gui/art/logo.png", "PNG")));
 	initWindow();
 	initSteps();
 	initTonLib();
