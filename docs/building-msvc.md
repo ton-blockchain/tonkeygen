@@ -24,6 +24,7 @@ All commands (if not stated otherwise) will be launched from **x86 Native Tools 
 Open **x86 Native Tools Command Prompt for VS 2019.bat**, go to ***BuildPath*** and run
 
     cd ThirdParty
+    git clone https://github.com/desktop-app/patches.git
     git clone https://chromium.googlesource.com/external/gyp
     cd gyp
     git checkout 9f2a7bb1

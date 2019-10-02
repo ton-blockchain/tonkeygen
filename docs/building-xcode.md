@@ -46,7 +46,7 @@ Go to ***BuildPath*** and run
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
     export PATH="$PWD/depot_tools:$PATH"
     cd gyp
-    git checkout 702ac58e47
+    git checkout 9f2a7bb1
     git apply ../patches/gyp.diff
     ./setup.py build
     sudo ./setup.py install
