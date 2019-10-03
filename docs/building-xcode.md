@@ -20,6 +20,8 @@ Go to ***BuildPath*** and run
 
     cd Libraries
 
+    git clone https://github.com/desktop-app/patches.git
+
     git clone --branch 0.5.0 https://github.com/ericniebler/range-v3
 
     cd xz-5.0.5
