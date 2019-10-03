@@ -42,7 +42,7 @@ elif [ "$BuildTarget" == "mac" ]; then
   if [ "$AC_USERNAME" == "" ]; then
     Error "AC_USERNAME not found!"
   fi
-  SetupFile="tonkeygen.$AppVersionStrFull.mac.zip"
+  SetupFile="tonkeygen.$AppVersionStrFull.mac.dmg"
   ReleasePath="$HomePath/../out/Release"
   BinaryName="Keygen"
 else
@@ -162,14 +162,14 @@ if [ "$BuildTarget" == "mac" ]; then
   fi
 
   cd "$ReleasePath"
-  rm -rf "$ReleasePath/AlphaTemp"
-  mkdir "$ReleasePath/AlphaTemp"
-  mkdir "$ReleasePath/AlphaTemp/$BinaryName"
-  cp -r "$ReleasePath/$BinaryName.app" "$ReleasePath/AlphaTemp/$BinaryName/"
-  cd "$ReleasePath/AlphaTemp"
-  zip -r "$SetupFile" "$BinaryName"
-  mv "$SetupFile" "$ReleasePath/"
-  cd "$ReleasePath"
+
+  cp -f tsetup_template.dmg tsetup.temp.dmg
+  TempDiskPath=`hdiutil attach -nobrowse -noautoopenrw -readwrite tsetup.temp.dmg | awk -F "\t" 'END {print $3}'`
+  cp -R "./$BinaryName.app" "$TempDiskPath/"
+  bless --folder "$TempDiskPath/" --openfolder "$TempDiskPath/"
+  hdiutil detach "$TempDiskPath"
+  hdiutil convert tsetup.temp.dmg -format UDZO -imagekey zlib-level=9 -ov -o "$SetupFile"
+  rm tsetup.temp.dmg
 
   echo "Beginning notarization process."
   set +e
@@ -227,16 +227,7 @@ if [ "$BuildTarget" == "mac" ]; then
   fi
 
   xcrun stapler staple "$ReleasePath/$BinaryName.app"
-
-  rm -rf "$ReleasePath/AlphaTemp"
-  mkdir "$ReleasePath/AlphaTemp"
-  mkdir "$ReleasePath/AlphaTemp/$BinaryName"
-  cp -r "$ReleasePath/$BinaryName.app" "$ReleasePath/AlphaTemp/$BinaryName/"
-  cd "$ReleasePath/AlphaTemp"
-  zip -r "$SetupFile" "$BinaryName"
-  mv "$SetupFile" "$ReleasePath/"
-  cd "$ReleasePath"
-  echo "Archive re-created."
+  xcrun stapler staple "$ReleasePath/$SetupFile"
 
   if [ ! -d "$ReleasePath/deploy" ]; then
     mkdir "$ReleasePath/deploy"
