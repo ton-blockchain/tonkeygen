@@ -4,6 +4,10 @@
 
 Choose a folder for the future build, for example **/Users/user/Projects**. It will be named ***BuildPath*** in the rest of this document. All commands will be launched from Terminal.
 
+
+### Download libraries
+
+Download [**xz-5.0.5**](http://tukaani.org/xz/xz-5.0.5.tar.gz) and unpack to ***BuildPath*/Libraries/xz-5.0.5**
 ### Clone source code and prepare libraries
 
 Go to ***BuildPath*** and run
@@ -18,6 +22,8 @@ Go to ***BuildPath*** and run
 
     git clone --recursive https://github.com/ton-blockchain/tonkeygen.git
 
+    mkdir Libraries
+    
     cd Libraries
 
     git clone https://github.com/desktop-app/patches.git
