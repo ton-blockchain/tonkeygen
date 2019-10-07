@@ -53,7 +53,7 @@ Open **x86 Native Tools Command Prompt for VS 2019.bat**, go to ***BuildPath*** 
 
     git clone https://github.com/desktop-app/patches.git
 
-    git clone --branch 0.5.0 https://github.com/ericniebler/range-v3 range-v3
+    git clone --branch 0.9.1 https://github.com/ericniebler/range-v3 range-v3
 
     git clone https://github.com/openssl/openssl.git
     cd openssl

@@ -19,12 +19,11 @@ Go to ***BuildPath*** and run
     git clone --recursive https://github.com/ton-blockchain/tonkeygen.git
 
     mkdir Libraries
-    
     cd Libraries
 
     git clone https://github.com/desktop-app/patches.git
 
-    git clone  https://github.com/ericniebler/range-v3
+    git clone --branch 0.9.1 https://github.com/ericniebler/range-v3
 
     git clone https://github.com/madler/zlib.git
     cd zlib
