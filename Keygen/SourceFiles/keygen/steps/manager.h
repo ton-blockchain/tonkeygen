@@ -84,7 +84,6 @@ private:
 	Ui::LayerManager _layerManager;
 
 	const Fn<std::vector<QString>(QString)> _wordsByPrefix;
-	std::vector<QString> _tmpwords;
 
 	std::unique_ptr<Step> _step;
 

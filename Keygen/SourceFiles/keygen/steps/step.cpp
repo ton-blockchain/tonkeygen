@@ -627,9 +627,6 @@ void Step::showAnimatedSlide(not_null<Step*> previous, Direction direction) {
 	Assert(now.contentTop == was.contentTop);
 	Assert(now.content.size() == was.content.size());
 
-	_slideAnimation.slide->setSnapshots(
-		Ui::PixmapFromImage(std::move(was.content)),
-		Ui::PixmapFromImage(std::move(now.content)));
 	_slideAnimation.slideTop = was.contentTop;
 	_slideAnimation.slideWidth = was.content.width() / pixelRatio;
 	_slideAnimation.lottieWas = std::move(was.lottie);
@@ -638,6 +635,9 @@ void Step::showAnimatedSlide(not_null<Step*> previous, Direction direction) {
 	_slideAnimation.lottieNow = std::move(now.lottie);
 	_slideAnimation.lottieNowTop = now.lottieTop;
 	_slideAnimation.lottieNowHeight = now.lottieHeight;
+	_slideAnimation.slide->setSnapshots(
+		Ui::PixmapFromImage(std::move(was.content)),
+		Ui::PixmapFromImage(std::move(now.content)));
 
 	if (_slideAnimation.lottieWas) {
 		_slideAnimation.lottieWas->attach(_widget.get());

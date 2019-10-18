@@ -45,7 +45,6 @@ private:
 	void handleWindowKeyPress(not_null<QKeyEvent*> e);
 	void setRandomSeed(const QByteArray &seed);
 	void checkRandomSeed();
-	void getValidWords();
 	void checkWords(std::vector<QString> &&words);
 	void verifyWords(std::vector<QString> &&words);
 	void copyPublicKey();
@@ -56,16 +55,15 @@ private:
 	[[nodiscard]] std::vector<QString> wordsByPrefix(
 		const QString &word) const;
 	[[nodiscard]] std::vector<QString> collectWords() const;
-	[[nodiscard]] Fn<void(Ton::Error)> errorHandler();
 
 	const std::unique_ptr<Ui::Window> _window;
 	const std::unique_ptr<Steps::Manager> _steps;
+	const base::flat_set<QString> _validWords;
 
 	State _state = State::Starting;
 	QByteArray _randomSeed;
-	base::flat_set<QString> _validWords;
 	int _minimalValidWordLength = 1;
-	std::optional<Ton::Key> _key;
+	std::optional<Ton::UtilityKey> _key;
 	std::optional<std::vector<QByteArray>> _verifying;
 
 	rpl::lifetime _lifetime;

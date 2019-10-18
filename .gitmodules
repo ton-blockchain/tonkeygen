@@ -37,3 +37,12 @@
 [submodule "Keygen/lib_tl"]
 	path = Keygen/lib_tl
 	url = https://github.com/desktop-app/lib_tl.git
+[submodule "Keygen/ThirdParty/xxHash"]
+	path = Keygen/ThirdParty/xxHash
+	url = https://github.com/Cyan4973/xxHash.git
+[submodule "Keygen/lib_storage"]
+	path = Keygen/lib_storage
+	url = https://github.com/desktop-app/lib_storage.git
+[submodule "Keygen/ThirdParty/expected"]
+	path = Keygen/ThirdParty/expected
+	url = https://github.com/TartanLlama/expected
