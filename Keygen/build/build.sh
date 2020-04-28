@@ -30,12 +30,14 @@ HomePath="$FullScriptPath/.."
 if [ "$BuildTarget" == "linux" ]; then
   echo "Building version $AppVersionStrFull for Linux 64bit.."
   SetupFile="tonkeygen.$AppVersionStrFull.linux.tar.xz"
-  ReleasePath="$HomePath/../out/Release"
+  ProjectPath="$HomePath/../out"
+  ReleasePath="$ProjectPath/Release"
   BinaryName="Keygen"
 elif [ "$BuildTarget" == "linux32" ]; then
   echo "Building version $AppVersionStrFull for Linux 32bit.."
   SetupFile="tonkeygen.$AppVersionStrFull.linux32.tar.xz"
-  ReleasePath="$HomePath/../out/Release"
+  ProjectPath="$HomePath/../out"
+  ReleasePath="$ProjectPath/Release"
   BinaryName="Keygen"
 elif [ "$BuildTarget" == "mac" ]; then
   echo "Building version $AppVersionStrFull for OS X 10.8+.."
@@ -43,7 +45,8 @@ elif [ "$BuildTarget" == "mac" ]; then
     Error "AC_USERNAME not found!"
   fi
   SetupFile="tonkeygen.$AppVersionStrFull.mac.dmg"
-  ReleasePath="$HomePath/../out/Release"
+  ProjectPath="$HomePath/../out"
+  ReleasePath="$ProjectPath/Release"
   BinaryName="Keygen"
 else
   Error "Invalid target!"
@@ -61,11 +64,11 @@ if [ "$BuildTarget" == "linux" ] || [ "$BuildTarget" == "linux32" ]; then
     Error "Backup folder not found!"
   fi
 
-  gyp/refresh.sh
+  ./configure.sh
 
+  cd $ProjectPath
+  cmake --build . --config Release --target Keygen -- -j8
   cd $ReleasePath
-  make -j4
-  echo "$BinaryName build complete!"
 
   if [ ! -f "$ReleasePath/$BinaryName" ]; then
     Error "$BinaryName not found!"
@@ -124,8 +127,11 @@ if [ "$BuildTarget" == "mac" ]; then
     Error "Backup path not found!"
   fi
 
-  gyp/refresh.sh
-  xcodebuild -project Keygen.xcodeproj -alltargets -configuration Release build
+  ./configure.sh
+
+  cd $ProjectPath
+  cmake --build . --config Release --target Keygen
+  cd $ReleasePath
 
   if [ ! -d "$ReleasePath/$BinaryName.app" ]; then
     Error "$BinaryName.app not found!"

@@ -6,6 +6,8 @@
 //
 #pragma once
 
+#include "core/base_integration.h"
+
 namespace Core {
 
 class Launcher {
@@ -32,6 +34,7 @@ private:
 	int _argc;
 	char **_argv;
 	QStringList _arguments;
+	BaseIntegration _baseIntegration;
 
 };
 

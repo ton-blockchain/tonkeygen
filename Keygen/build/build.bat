@@ -16,7 +16,7 @@ echo Building version %AppVersionStrFull% for Windows..
 echo.
 
 set "HomePath=%FullScriptPath%.."
-set "SolutionPath=%HomePath%\.."
+set "SolutionPath=%HomePath%\..\out"
 set "PortableFile=tonkeygen.%AppVersionStrFull%.win.zip"
 set "ReleasePath=%HomePath%\..\out\Release"
 set "DeployPath=%ReleasePath%\deploy\%AppVersionStrMajor%\%AppVersionStrFull%"
@@ -35,11 +35,11 @@ if exist %ReleasePath%\deploy\%AppVersionStrMajor%\%AppVersionStr%\ (
 
 cd "%HomePath%"
 
-call gyp\refresh.bat
+call configure.bat
 if %errorlevel% neq 0 goto error
 
 cd "%SolutionPath%"
-call ninja -C out/Release Keygen
+call cmake --build . --config Release --target Keygen
 if %errorlevel% neq 0 goto error
 
 echo.
@@ -64,7 +64,6 @@ if %errorlevel% neq 0 goto error
 
 move "%ReleasePath%\%BinaryName%.exe" "%DeployPath%\%BinaryName%\"
 xcopy "%ReleasePath%\%BinaryName%.pdb" "%DeployPath%\"
-move "%ReleasePath%\%BinaryName%.exe.pdb" "%DeployPath%\"
 if %errorlevel% neq 0 goto error
 
 cd "%DeployPath%"
@@ -83,7 +82,6 @@ echo.
 
 if not exist "%DeployPath%\%PortableFile%" goto error
 if not exist "%DeployPath%\%BinaryName%.pdb" goto error
-if not exist "%DeployPath%\%BinaryName%.exe.pdb" goto error
 md "%FinalDeployPath%"
 
 xcopy "%DeployPath%\%PortableFile%" "%FinalDeployPath%\" /Y

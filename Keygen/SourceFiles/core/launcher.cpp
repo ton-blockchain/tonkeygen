@@ -59,7 +59,9 @@ std::unique_ptr<Launcher> Launcher::Create(int argc, char *argv[]) {
 
 Launcher::Launcher(int argc, char *argv[])
 : _argc(argc)
-, _argv(argv) {
+, _argv(argv)
+, _baseIntegration(argc, argv) {
+	base::Integration::Set(&_baseIntegration);
 }
 
 void Launcher::init() {
@@ -126,21 +128,3 @@ int Launcher::executeApplication() {
 }
 
 } // namespace Core
-
-namespace base {
-namespace assertion {
-
-inline void log(const char *message, const char *file, int line) {
-	const auto info = QStringLiteral("%1 %2:%3"
-	).arg(message
-	).arg(file
-	).arg(line
-	);
-	const auto entry = QStringLiteral("Assertion Failed! ") + info;
-#ifdef LOG
-	LOG((entry));
-#endif // LOG
-}
-
-} // namespace assertion
-} // namespace base
