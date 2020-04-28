@@ -19,9 +19,6 @@
 [submodule "Keygen/codegen"]
 	path = Keygen/codegen
 	url = https://github.com/desktop-app/codegen
-[submodule "Keygen/gyp/helpers"]
-	path = Keygen/gyp/helpers
-	url = https://github.com/desktop-app/gyp_helpers
 [submodule "Keygen/lib_ton"]
 	path = Keygen/lib_ton
 	url = https://github.com/desktop-app/lib_ton.git
