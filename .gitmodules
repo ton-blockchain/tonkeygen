@@ -28,9 +28,6 @@
 [submodule "Keygen/ThirdParty/rlottie"]
 	path = Keygen/ThirdParty/rlottie
 	url = https://github.com/desktop-app/rlottie.git
-[submodule "Keygen/lib_rlottie"]
-	path = Keygen/lib_rlottie
-	url = https://github.com/desktop-app/lib_rlottie.git
 [submodule "Keygen/lib_lottie"]
 	path = Keygen/lib_lottie
 	url = https://github.com/desktop-app/lib_lottie.git
@@ -46,3 +43,6 @@
 [submodule "Keygen/ThirdParty/expected"]
 	path = Keygen/ThirdParty/expected
 	url = https://github.com/TartanLlama/expected
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/desktop-app/cmake_helpers.git
